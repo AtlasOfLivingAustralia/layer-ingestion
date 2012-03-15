@@ -227,7 +227,7 @@ public class ContextualImport {
             }
             
             // Set geoserver layer as having a generic border
-            HttpPut put2 = new HttpPut("http://localhost:8082/geoserver/rest/layers/ALA:christest2");
+            HttpPut put2 = new HttpPut(String.format("http://localhost:8082/geoserver/rest/layers/ALA:%s", layerName));
             put2.setHeader("Content-type", "text/xml");
             put2.setEntity(new StringEntity("<layer><defaultStyle><name>generic_border</name></defaultStyle><enabled>true</enabled></layer>"));
             
