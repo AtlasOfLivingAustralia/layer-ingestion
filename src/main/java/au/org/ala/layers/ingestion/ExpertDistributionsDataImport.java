@@ -79,10 +79,10 @@ public class ExpertDistributionsDataImport {
             // Get ID to use for layer
             try {
                 Statement st = conn.createStatement();
-                ResultSet rs = st.executeQuery(String.format("SELECT * from copy_distributiondata where spCode = %s", spCode));
+                ResultSet rs = st.executeQuery(String.format("SELECT * from distributiondata where spCode = %s", spCode));
                 if (rs.next()) {
                     // update existing row with new values
-                    PreparedStatement stUpdate = conn.prepareStatement("UPDATE copy_distributiondata SET scientific = ?, authority_ = ?, common_nam = ?, family = ?,"
+                    PreparedStatement stUpdate = conn.prepareStatement("UPDATE distributiondata SET scientific = ?, authority_ = ?, common_nam = ?, family = ?,"
                             + " genus_name = ?, specific_n = ?, min_depth = ?, max_depth = ?, pelagic_fl = ?, " + " lsid = ?, type = ?, estuarine_fl = ?, coastal_fl = ?, desmersal_fl = ?,"
                             + " group_name = ?, genus_exemplar = ?, family_exemplar = ?, caab_species_number = ?, caab_species_url = ?, caab_family_number = ?,"
                             + " caab_family_url = ?, metadata_uuid = ?, metadata_u = ?, family_lsid = ?, genus_lsid = ? WHERE spCode = ?;");
@@ -124,7 +124,7 @@ public class ExpertDistributionsDataImport {
                 } else {
                     // insert new row
                     PreparedStatement stInsert = conn.prepareStatement(String
-                            .format("INSERT INTO copy_distributiondata VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"));
+                            .format("INSERT INTO distributiondata VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"));
                     stInsert.setInt(1, Integer.parseInt(spCode));
                     stInsert.setString(2, scientificName);
                     stInsert.setString(3, authorityFull);

@@ -19,9 +19,11 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
 
 public class ContextualImport {
     
@@ -34,6 +36,8 @@ public class ContextualImport {
             System.out.println("USAGE: ContextualImport shapeFilePath layerName layerDescription fieldsSid fieldsSname fieldsSdesc");
             return;
         }
+        
+        System.out.println("Beginning contextual load");
 
         String shapeFilePath = args[0];
         String reprojectedShapeFileDestination = args[1];
@@ -53,6 +57,7 @@ public class ContextualImport {
             fieldsSdesc = args[12];
         }
 
+        System.out.println("Checking supplied paths for shape file and destination directory");
         File shapeFile = new File(shapeFilePath);
         if (!shapeFile.exists() || !shapeFile.isFile()) {
             throw new RuntimeException("Shape file " + shapeFilePath + " does not exist or is a directory");
@@ -63,6 +68,7 @@ public class ContextualImport {
             throw new RuntimeException("Shape file " + shapeFilePath + " does not exist or is not a directory");
         }
 
+        System.out.println("Connecting to database");
         Class.forName("org.postgresql.Driver");
         Properties props = new Properties();
         props.setProperty("user", dbUsername);
@@ -88,7 +94,7 @@ public class ContextualImport {
             System.out.println("Reprojecting to WGS 84...");
             File reprojectedShapeFile = new File(reprojectedShapeFileDestinationDir, shapeFile.getName());
 
-            Process procOgr2Ogr = Runtime.getRuntime().exec(String.format("ogr2ogr -t_srs EPSG:4326 \"%s\" \"%s\"", reprojectedShapeFile.getAbsolutePath(), shapeFile.getAbsolutePath(), id));
+            Process procOgr2Ogr = Runtime.getRuntime().exec(new String[] {"ogr2ogr", "-t_srs", "EPSG:4326", reprojectedShapeFile.getAbsolutePath(), shapeFile.getAbsolutePath()});
             int ogr2ogrReturnVal = procOgr2Ogr.waitFor();
             if (ogr2ogrReturnVal != 0) {
                 String ogr2ogrErrorOutput = IOUtils.toString(procOgr2Ogr.getErrorStream());
@@ -101,7 +107,7 @@ public class ContextualImport {
             double maxLatitude;
             double minLongitude;
             double maxLongitude;
-            Process procOgrinfo = Runtime.getRuntime().exec(String.format("ogrinfo -so \"%s\" \"%s\"", reprojectedShapeFile.getAbsolutePath(), layerName));
+            Process procOgrinfo = Runtime.getRuntime().exec(new String[] {"ogrinfo", "-so", reprojectedShapeFile.getAbsolutePath(), layerName});
 
             // read output straight away otherwise process may hang
             String ogrinfoOutput = IOUtils.toString(procOgrinfo.getInputStream());
@@ -138,7 +144,7 @@ public class ContextualImport {
             
             // use shp2pgsql to convert shape file into sql for insertion in the database
             System.out.println("Converting shape file for insertion in database...");
-            Process procShp2Pgsql = Runtime.getRuntime().exec(String.format("shp2pgsql -I -s 4326 \"%s\" %s", shapeFile.getAbsolutePath(), id));
+            Process procShp2Pgsql = Runtime.getRuntime().exec(new String[] {"shp2pgsql", "-I", "-s", "4326", shapeFile.getAbsolutePath(), Integer.toString(id)});
 
             String shp2pgsqlOutput = IOUtils.toString(procShp2Pgsql.getInputStream());
             
@@ -212,50 +218,57 @@ public class ContextualImport {
             PreparedStatement createBBoxesAndAreaStatement = createGenerateObjectsBBoxAndAreaStatement(conn);
             createBBoxesAndAreaStatement.execute();
             
+            // database updates complete so commit the transaction
+            conn.commit();
+            
             // Create layer in geoserver
             System.out.println("Creating layer in geoserver...");
             DefaultHttpClient httpClient = new DefaultHttpClient();
             httpClient.getCredentialsProvider().setCredentials(new AuthScope("localhost", 8082), new UsernamePasswordCredentials(geoserverUsername, geoserverPassword));
-            HttpPut put = new HttpPut("http://localhost:8082/geoserver/rest/workspaces/ALA/datastores/LayersDB/external.shp");
-            put.setHeader("Content-type", "text/plain");
-            put.setEntity(new StringEntity(reprojectedShapeFile.toURI().toURL().toString()));
+            HttpPost post = new HttpPost("http://localhost:8082/geoserver/rest/workspaces/ALA/datastores/LayersDB/featuretypes");
+            post.setHeader("Content-type", "text/xml");
+            post.setEntity(new StringEntity(String.format("<featureType><name>%s</name><nativeName>%s</nativeName><title>%s</title></featureType>", layerName, id, layerDescription)));
             
-            HttpResponse response = httpClient.execute(put);
+            HttpResponse response = httpClient.execute(post);
             
             if (response.getStatusLine().getStatusCode() != 201) {
                 throw new RuntimeException("Error creating layer in geoserver: " + response.toString());
             }
             
+            EntityUtils.consume(response.getEntity());
+            
             // Set geoserver layer as having a generic border
-            HttpPut put2 = new HttpPut(String.format("http://localhost:8082/geoserver/rest/layers/ALA:%s", layerName));
-            put2.setHeader("Content-type", "text/xml");
-            put2.setEntity(new StringEntity("<layer><defaultStyle><name>generic_border</name></defaultStyle><enabled>true</enabled></layer>"));
+            HttpPut put = new HttpPut(String.format("http://localhost:8082/geoserver/rest/layers/ALA:%s", layerName));
+            put.setHeader("Content-type", "text/xml");
+            put.setEntity(new StringEntity("<layer><defaultStyle><name>generic_border</name></defaultStyle><enabled>true</enabled></layer>"));
             
             HttpResponse response2 = httpClient.execute(put);
             
             if (response2.getStatusLine().getStatusCode() != 200) {
-                throw new RuntimeException("Error setting layer border in geoserver: " + response.toString());
+                throw new RuntimeException("Error setting layer border in geoserver: " + response2.toString());
             }
+            
+            EntityUtils.consume(response2.getEntity());
             
             //TODO set extents in geoserver (is this possible with the REST api?)
             //TODO geoserver call to generate GWC tiles.
 
-            conn.commit();
-            
             //Run the object stats generator tool to do further operations on bboxes and areas
-            System.out.println("Running ObjectStatsGenerator tool...");
-            ObjectsStatsGenerator.main(new String[] { "10", dbJdbcUrl, dbUsername, dbPassword });
+            //System.out.println("Running ObjectStatsGenerator tool...");
+            //ObjectsStatsGenerator.main(new String[] { "10", dbJdbcUrl, dbUsername, dbPassword });
 
         } catch (Exception ex) {
             ex.printStackTrace();
             conn.rollback();
         }
+        
+        
     }
 
     private static PreparedStatement createLayersInsert(Connection conn, int layerId, String description, String path, String name, String displayPath, double minLatitude, double minLongitude,
             double maxLatitude, double maxLongitude) throws SQLException {
         PreparedStatement stLayersInsert = conn
-                .prepareStatement("INSERT INTO layers (id, name, description, type, path, displayPath, minlatitude, minlongitude, maxlatitude, maxlongitude) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+                .prepareStatement("INSERT INTO layers (id, name, description, type, path, displayPath, minlatitude, minlongitude, maxlatitude, maxlongitude, enabled, displayname, pid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
         stLayersInsert.setInt(1, layerId);
         stLayersInsert.setString(2, name);
         stLayersInsert.setString(3, description);
@@ -266,6 +279,9 @@ public class ContextualImport {
         stLayersInsert.setDouble(8, minLongitude);
         stLayersInsert.setDouble(9, maxLatitude);
         stLayersInsert.setDouble(10, maxLongitude);
+        stLayersInsert.setBoolean(11, true);
+        stLayersInsert.setString(12, description);
+        stLayersInsert.setString(13, Integer.toString(layerId));
         return stLayersInsert;
     }
 
