@@ -325,9 +325,13 @@ public class ContextualImport {
     }
 
     private static PreparedStatement createObjectNameGenerationStatement(Connection conn) throws SQLException {
-        PreparedStatement objectNameGenerationStatement = conn.prepareStatement("INSERT INTO obj_names (name)" + "  SELECT lower(objects.name) FROM fields, objects"
-                + "  LEFT OUTER JOIN obj_names ON lower(objects.name)=obj_names.name" + "  WHERE obj_names.name IS NULL" + "  AND fields.namesearch = true" + " AND fields.id = objects.fid"
-                + " GROUP BY lower(objects.name);" + "  UPDATE objects SET name_id=obj_names.id FROM obj_names WHERE name_id IS NULL AND lower(objects.name)=obj_names.name;");
+        PreparedStatement objectNameGenerationStatement = conn.prepareStatement("INSERT INTO obj_names (name)"
+                + "  SELECT lower(objects.name) FROM fields, objects"
+                + "  LEFT OUTER JOIN obj_names ON lower(objects.name)=obj_names.name"
+                + "  WHERE obj_names.name IS NULL" + "  AND fields.namesearch = true"
+                + " AND fields.id = objects.fid"
+                + " GROUP BY lower(objects.name);"
+                + "  UPDATE objects SET name_id=obj_names.id FROM obj_names WHERE name_id IS NULL AND lower(objects.name)=obj_names.name;");
 
         return objectNameGenerationStatement;
     }
