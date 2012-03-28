@@ -1,31 +1,52 @@
 package au.org.ala.layers.ingestion;
 
 import java.io.File;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
+import java.sql.Types;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.ala.layers.legend.GridLegend;
 import org.ala.layers.util.Bil2diva;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpResponse;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
 
 public class EnvironmentalImport {
 
     public static void main(String[] args) throws Exception {
         String layerName = args[0];
-        String units = args[1];
-        String rawDataDirPath = args[2];
-        String processDirPath = args[3];
-        String divaDirPath = args[4];
-        String legendDirPath = args[5];
-        String geotiffDirPath = args[6];
-        String dbJdbcUrl = args[7];
-        String dbUsername = args[8];
-        String dbPassword = args[9];
-        String geoserverUsername = args[10];
-        String geoserverPassword = args[11];
-        String geoserverBaseRestURL = args[12];
+        String layerDescription = args[1];
+        String units = args[2];
+        String rawDataDirPath = args[3];
+        String processDirPath = args[4];
+        String divaDirPath = args[5];
+        String legendDirPath = args[6];
+        String geotiffDirPath = args[7];
+        String dbJdbcUrl = args[8];
+        String dbUsername = args[9];
+        String dbPassword = args[10];
+        String geoserverUsername = args[11];
+        String geoserverPassword = args[12];
+        String geoserverQueryTemplate = args[13];
 
         // check validity of passed in directory names
         File rawDataDir = new File(rawDataDirPath);
@@ -53,11 +74,23 @@ public class EnvironmentalImport {
             throw new RuntimeException("Supplied geotiff directory " + geotiffDirPath + " does not exist or is not a directory");
         }
 
+        System.out.println("Beginning environmetal load");
+        
+        System.out.println("Connecting to database");
+        Class.forName("org.postgresql.Driver");
+        Properties props = new Properties();
+        props.setProperty("user", dbUsername);
+        props.setProperty("password", dbPassword);
+        Connection conn = DriverManager.getConnection(dbJdbcUrl, props);
+        conn.setAutoCommit(false);
+        
+        try {
         // create process directory
         File layerProcessDir = new File(processDir, layerName);
         layerProcessDir.mkdir();
 
-        // gdalwarp System.out.println("Running gdalwarp");'
+        // running gdalwarp
+        System.out.println("Running gdalwarp");
         File hdrFile = new File(rawDataDir, "hdr.adf");
         if (!hdrFile.exists()) {
             throw new RuntimeException("Could not find hdr.adf in " + rawDataDirPath);
@@ -65,7 +98,7 @@ public class EnvironmentalImport {
 
         File bilFile = new File(layerProcessDir, layerName + ".bil");
 
-        Process procGdalWarp = Runtime.getRuntime().exec(new String[] { "gdalwarp", "-of", "EHdr", "-ot", "Float32", "-dstnodata", "-9999", hdrFile.getAbsolutePath(), bilFile.getAbsolutePath() });
+        Process procGdalWarp = Runtime.getRuntime().exec(new String[] { "gdalwarp", "-of", "EHdr", "-ot", "Float32", "-r", "cubicspline", hdrFile.getAbsolutePath(), bilFile.getAbsolutePath() });
 
         int gdalWarpReturnVal = procGdalWarp.waitFor();
 
@@ -76,10 +109,16 @@ public class EnvironmentalImport {
 
         // bil2diva
         System.out.println("Running Bil2diva");
-        Bil2diva.main(new String[] { layerProcessDir.getAbsolutePath() + File.separator + layerName, divaDir.getAbsolutePath() + File.separator + layerName, units });
+        boolean bil2DivaSuccess = Bil2diva.bil2diva(layerProcessDir.getAbsolutePath() + File.separator + layerName, divaDir.getAbsolutePath() + File.separator + layerName, units);
+        if (!bil2DivaSuccess) {
+            throw new RuntimeException("Bil2diva Failed");
+        }
 
-        // GridLegend System.out.println("Running GridLegend");
-        GridLegend.main(new String[] { divaDir.getAbsolutePath() + File.separator + layerName, legendDir.getAbsolutePath() + File.separator + layerName });
+        System.out.println("Running GridLegend");
+        boolean gridLegendSuccess = GridLegend.generateGridLegend(divaDir.getAbsolutePath() + File.separator + layerName, legendDir.getAbsolutePath() + File.separator + layerName, 1, false);
+        if (!gridLegendSuccess) {
+            throw new RuntimeException("GridLegend Failed");
+        }
 
         // gdal_translate
         System.out.println("Running gdal_translate");
@@ -142,33 +181,99 @@ public class EnvironmentalImport {
         minLongitude = minMaxValues[2];
         maxLongitude = minMaxValues[3];
 
-        System.out.println(minValue);
-        System.out.println(maxValue);
+        // Get ID to use for layer
+        System.out.println("Generating ID for new layer...");
+        Statement st = conn.createStatement();
+        ResultSet rs = st.executeQuery("SELECT MAX(id) from layers");
+        rs.next();
 
-        System.out.println(minLatitude);
-        System.out.println(maxLatitude);
-        System.out.println(minLongitude);
-        System.out.println(maxLongitude);
+        int id = 1;
+        String idAsString = rs.getString(1);
+        if (idAsString != null) {
+            id = Integer.parseInt(idAsString);
+            id++;
+        }
 
-        /*
-         * // create layers table entry
-         * System.out.println("Creating layers table entry");
-         * 
-         * // create fields table entry
-         * System.out.println("Creating fields table entry");
-         * 
-         * // create layer in geoserver
-         * System.out.println("Creating layer in geoserver");
-         * 
-         * // create style in geoserver (refer to SLD)
-         * System.out.println("Creating style in geoserver");
-         * 
-         * // upload sld file
-         * System.out.println("Uploading sld file to geoserver");
-         * 
-         * // create default style in geoserver
-         * System.out.println("Creating default style in geoserver");
-         */
+        // insert to layers table
+        String displayPath = MessageFormat.format(geoserverQueryTemplate, layerName);
+        System.out.println("Creating layers table entry...");
+        PreparedStatement createLayersStatement = createLayersInsert(conn, id, layerDescription, divaDir.getAbsolutePath(), layerName, displayPath, minLatitude, minLongitude, maxLatitude, maxLongitude, minValue, maxValue, units);
+        createLayersStatement.execute();
+
+        // insert to fields table
+        System.out.println("Creating fields table entry...");
+        PreparedStatement createFieldsStatement = createFieldsInsert(conn, id, layerName, layerDescription);
+        createFieldsStatement.execute();
+
+        // ========== CONFIGURE LAYER IN GEOSERVER ===================
+        
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        httpClient.getCredentialsProvider().setCredentials(new AuthScope("localhost", 8082), new UsernamePasswordCredentials(geoserverUsername, geoserverPassword));
+        
+        // Create layer in geoserver
+        System.out.println("Creating layer in geoserver...");
+        HttpPut createLayerPut = new HttpPut(String.format("http://localhost:8082/geoserver/rest/workspaces/ALA/coveragestores/%s/external.geotiff", layerName));
+        createLayerPut.setHeader("Content-type", "text/plain");
+        createLayerPut.setEntity(new StringEntity(geotiffFile.toURI().toURL().toString()));
+        
+        HttpResponse createLayerResponse = httpClient.execute(createLayerPut);
+        
+        if (createLayerResponse.getStatusLine().getStatusCode() != 200) {
+            throw new RuntimeException("Error creating layer in geoserver: " + createLayerResponse.toString());
+        }
+        
+        EntityUtils.consume(createLayerResponse.getEntity());
+        
+        // create style in geoserver (refer to SLD)
+        System.out.println("Creating style in geoserver");        
+        HttpPost createStylePost = new HttpPost("http://localhost:8082/geoserver/rest/styles");
+        createStylePost.setHeader("Content-type", "text/xml");
+        createStylePost.setEntity(new StringEntity(String.format("<style><name>%s_style</name><filename>%s.sld</filename></style>", layerName, layerName)));
+        
+        HttpResponse createStyleResponse = httpClient.execute(createLayerPut);
+        
+        if (createStyleResponse.getStatusLine().getStatusCode() != 201) {
+            throw new RuntimeException("Error creating layer in geoserver: " + createStyleResponse.toString());
+        }
+        
+        EntityUtils.consume(createStyleResponse.getEntity());
+        
+        // upload sld
+        System.out.println("Uploading sld file to geoserver");
+        File sldFile = new File(legendDir, layerName + ".sld");
+        String sldData = FileUtils.readFileToString(sldFile);
+        
+        HttpPut uploadSldPut = new HttpPut(String.format("http://localhost:8082/geoserver/rest/styles/%s_style", layerName));
+        uploadSldPut.setHeader("Content-type", "application/vnd.ogc.sld+xml");
+        uploadSldPut.setEntity(new StringEntity(sldData));
+        
+        HttpResponse uploadSldResponse = httpClient.execute(uploadSldPut);
+        
+        if (uploadSldResponse.getStatusLine().getStatusCode() != 200) {
+            throw new RuntimeException("Error creating layer in geoserver: " + uploadSldResponse.toString());
+        }
+        
+        EntityUtils.consume(uploadSldResponse.getEntity());        
+        
+        // set default style in geoserver
+        System.out.println("Setting default style in geoserver");
+        HttpPut setDefaultStylePut = new HttpPut(String.format("http://localhost:8082/geoserver/rest/layers/ALA:%s", layerName));
+        setDefaultStylePut.setHeader("Content-type", "text/xml");
+        setDefaultStylePut.setEntity(new StringEntity(String.format("<layer><enabled>true</enabled><defaultStyle><name>%s_style</name></defaultStyle></layer>", layerName)));
+        
+        HttpResponse setDefaultStyleResponse = httpClient.execute(createLayerPut);
+        
+        if (setDefaultStyleResponse.getStatusLine().getStatusCode() != 200) {
+            throw new RuntimeException("Error creating layer in geoserver: " + setDefaultStyleResponse.toString());
+        }
+        
+        EntityUtils.consume(setDefaultStyleResponse.getEntity());  
+               
+        conn.commit();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            conn.rollback();
+        }
     }
 
     private static double[] extractCornerCoordinates(String gdalInfoOutput, String pattern) {
@@ -223,6 +328,55 @@ public class EnvironmentalImport {
         retArray[3] = maxLongitude;
 
         return retArray;
+    }
+
+    private static PreparedStatement createLayersInsert(Connection conn, int layerId, String description, String path, String name, String displayPath, double minLatitude, double minLongitude,
+            double maxLatitude, double maxLongitude, double valueMin, double valueMax, String units) throws SQLException {
+        PreparedStatement stLayersInsert = conn
+                .prepareStatement("INSERT INTO layers (id, name, description, type, path, displayPath, minlatitude, minlongitude, maxlatitude, maxlongitude, enabled, displayname, environmentalvaluemin, environmentalvaluemax, environmentalvalueunits, uid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+        stLayersInsert.setInt(1, layerId);
+        stLayersInsert.setString(2, name);
+        stLayersInsert.setString(3, description);
+        stLayersInsert.setString(4, "Environmental");
+        stLayersInsert.setString(5, path);
+        stLayersInsert.setString(6, displayPath);
+        stLayersInsert.setDouble(7, minLatitude);
+        stLayersInsert.setDouble(8, minLongitude);
+        stLayersInsert.setDouble(9, maxLatitude);
+        stLayersInsert.setDouble(10, maxLongitude);
+        stLayersInsert.setBoolean(11, true);
+        stLayersInsert.setString(12, description);
+        stLayersInsert.setDouble(13, valueMin);
+        stLayersInsert.setDouble(14, valueMax);
+        stLayersInsert.setString(15, units);
+        stLayersInsert.setInt(16, layerId);
+        return stLayersInsert;
+    }
+
+    private static PreparedStatement createFieldsInsert(Connection conn, int layerId, String name, String description) throws SQLException {
+        // TOOD slightly different statement if sdesc is null...
+
+        PreparedStatement stFieldsInsert = conn
+                .prepareStatement("INSERT INTO fields (name, id, \"desc\", type, spid, sid, sname, sdesc, indb, enabled, last_update, namesearch, defaultlayer, \"intersect\", layerbranch, analysis)"
+                        + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+        stFieldsInsert.setString(1, name);
+        stFieldsInsert.setString(2, "el" + Integer.toString(layerId));
+        stFieldsInsert.setString(3, description);
+        stFieldsInsert.setString(4, "e");
+        stFieldsInsert.setString(5, Integer.toString(layerId));
+        stFieldsInsert.setNull(6, Types.VARCHAR);
+        stFieldsInsert.setNull(7, Types.VARCHAR);
+        stFieldsInsert.setNull(8, Types.VARCHAR);
+        stFieldsInsert.setBoolean(9, true);
+        stFieldsInsert.setBoolean(10, true);
+        stFieldsInsert.setTimestamp(11, new Timestamp(System.currentTimeMillis()));
+        stFieldsInsert.setBoolean(12, true);
+        stFieldsInsert.setBoolean(13, false);
+        stFieldsInsert.setBoolean(14, false);
+        stFieldsInsert.setBoolean(15, false);
+        stFieldsInsert.setBoolean(16, true);
+
+        return stFieldsInsert;
     }
 
 }
