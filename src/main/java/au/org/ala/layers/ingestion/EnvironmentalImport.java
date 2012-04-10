@@ -32,6 +32,8 @@ import org.apache.http.util.EntityUtils;
 
 public class EnvironmentalImport {
 
+    private static final String GEOSERVER_QUERY_TEMPLATE = "<COMMON_GEOSERVER_URL>/gwc/service/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:{0}&format=image/png&styles=";
+
     public static void main(String[] args) throws Exception {
         String layerName = args[0];
         String layerDescription = args[1];
@@ -46,7 +48,6 @@ public class EnvironmentalImport {
         String dbPassword = args[10];
         String geoserverUsername = args[11];
         String geoserverPassword = args[12];
-        String geoserverQueryTemplate = args[13];
 
         // check validity of passed in directory names
         File rawDataDir = new File(rawDataDirPath);
@@ -98,7 +99,7 @@ public class EnvironmentalImport {
 
         File bilFile = new File(layerProcessDir, layerName + ".bil");
 
-        Process procGdalWarp = Runtime.getRuntime().exec(new String[] { "gdalwarp", "-of", "EHdr", "-ot", "Float32", "-r", "cubicspline", hdrFile.getAbsolutePath(), bilFile.getAbsolutePath() });
+        Process procGdalWarp = Runtime.getRuntime().exec(new String[] { "gdalwarp", "-of", "EHdr", "-ot", "Float32", hdrFile.getAbsolutePath(), bilFile.getAbsolutePath() });
 
         int gdalWarpReturnVal = procGdalWarp.waitFor();
 
@@ -132,54 +133,21 @@ public class EnvironmentalImport {
             throw new RuntimeException("gdal_translate failed: " + gdalTranslateErrorOutput);
         }
 
-        // gdal info to get extents, min/max
-        System.out.println("Running gdalinfo");
-        Process procGdalInfo = Runtime.getRuntime().exec(new String[] { "gdalinfo", hdrFile.getAbsolutePath() });
-        String gdalInfoOutput = IOUtils.toString(procGdalInfo.getInputStream());
-
-        // process should have already terminated at this point - just do
-        // this to get the return code
-        int gdalInfoReturnVal = procGdalInfo.waitFor();
-
-        if (gdalInfoReturnVal != 0) {
-            String gdalInfoErrorOutput = IOUtils.toString(procGdalInfo.getErrorStream());
-            throw new RuntimeException("gdalinfo failed: " + gdalInfoErrorOutput);
+        // read extents, min/max from diva .grd file
+        System.out.println("Extracting extents and min/max environmental value from diva .grd file");
+        File divaGrd = new File(divaDir, layerName + ".grd");
+        if (!divaGrd.exists()) {
+            throw new RuntimeException("Could not locate diva .grd file: " + divaGrd.toString());
         }
-
-        double minValue;
-        double maxValue;
-        double minLatitude;
-        double maxLatitude;
-        double minLongitude;
-        double maxLongitude;
-
-        // Use regular expression matching to pull the min and max values from
-        // the output of gdalinfo
-        Pattern p1 = Pattern.compile("Min=(.+) Max=(.+)$", Pattern.MULTILINE);
-        Matcher m1 = p1.matcher(gdalInfoOutput);
-        if (m1.find()) {
-            if (m1.groupCount() == 2) {
-                minValue = Double.parseDouble(m1.group(1));
-                maxValue = Double.parseDouble(m1.group(2));
-
-            } else {
-                throw new RuntimeException("error reading min and max from gdalinfo: " + gdalInfoOutput);
-            }
-        } else {
-            throw new RuntimeException("error reading extents from gdalinfo: " + gdalInfoOutput);
-        }
-
-        // Determine min/max latitude and longitude from gdalinfo output
-        double[] upperLeftCornerCoords = extractCornerCoordinates(gdalInfoOutput, "^Upper Left\\s+\\(\\s+(.+),\\s+(.+)\\) .+$");
-        double[] lowerLeftCornerCoords = extractCornerCoordinates(gdalInfoOutput, "^Lower Left\\s+\\(\\s+(.+),\\s+(.+)\\) .+$");
-        double[] upperRightCornerCoords = extractCornerCoordinates(gdalInfoOutput, "^Upper Right\\s+\\(\\s+(.+),\\s+(.+)\\) .+$");
-        double[] lowerRightCornerCoords = extractCornerCoordinates(gdalInfoOutput, "^Lower Right\\s+\\(\\s+(.+),\\s+(.+)\\) .+$");
-
-        double[] minMaxValues = determineMinMaxLatitudeLongitude(upperLeftCornerCoords, lowerLeftCornerCoords, upperRightCornerCoords, lowerRightCornerCoords);
-        minLatitude = minMaxValues[0];
-        maxLatitude = minMaxValues[1];
-        minLongitude = minMaxValues[2];
-        maxLongitude = minMaxValues[3];
+        
+        String strDivaGrd = FileUtils.readFileToString(divaGrd);
+        
+        float minValue = Float.parseFloat(matchPattern(strDivaGrd, "^MinValue=(.+)$"));
+        float maxValue = Float.parseFloat(matchPattern(strDivaGrd, "^MaxValue=(.+)$"));
+        float minLatitude = Float.parseFloat(matchPattern(strDivaGrd, "^MinY=(.+)$"));
+        float maxLatitude = Float.parseFloat(matchPattern(strDivaGrd, "^MaxY=(.+)$"));
+        float minLongitude = Float.parseFloat(matchPattern(strDivaGrd, "^MinX=(.+)$"));
+        float maxLongitude = Float.parseFloat(matchPattern(strDivaGrd, "^MaxX=(.+)$"));
 
         // Get ID to use for layer
         System.out.println("Generating ID for new layer...");
@@ -195,7 +163,7 @@ public class EnvironmentalImport {
         }
 
         // insert to layers table
-        String displayPath = MessageFormat.format(geoserverQueryTemplate, layerName);
+        String displayPath = MessageFormat.format(GEOSERVER_QUERY_TEMPLATE, layerName);
         System.out.println("Creating layers table entry...");
         PreparedStatement createLayersStatement = createLayersInsert(conn, id, layerDescription, divaDir.getAbsolutePath(), layerName, displayPath, minLatitude, minLongitude, maxLatitude, maxLongitude, minValue, maxValue, units);
         createLayersStatement.execute();
@@ -267,7 +235,7 @@ public class EnvironmentalImport {
             throw new RuntimeException("Error creating layer in geoserver: " + setDefaultStyleResponse.toString());
         }
         
-        EntityUtils.consume(setDefaultStyleResponse.getEntity());  
+        EntityUtils.consume(setDefaultStyleResponse.getEntity());        
                
         conn.commit();
         } catch (Exception ex) {
@@ -276,58 +244,31 @@ public class EnvironmentalImport {
         }
     }
 
-    private static double[] extractCornerCoordinates(String gdalInfoOutput, String pattern) {
-        double[] retArray = new double[2];
-        double latitude;
-        double longitude;
-
-        Pattern p = Pattern.compile(pattern, Pattern.MULTILINE);
-        Matcher m = p.matcher(gdalInfoOutput);
-        if (m.find()) {
-            if (m.groupCount() == 2) {
-                longitude = Double.parseDouble(m.group(1));
-                latitude = Double.parseDouble(m.group(2));
-
+    /**
+     * Match a pattern with a single capturing group and return the content of
+     * the capturing group
+     * 
+     * @param text
+     *            the text to match against
+     * @param pattern
+     *            the pattern (regular expression) must contain one and only one
+     *            capturing group
+     * @return
+     */
+    private static String matchPattern(String text, String pattern) {
+        // Use regular expression matching to pull the min and max values from
+        // the output of gdalinfo
+        Pattern p1 = Pattern.compile(pattern, Pattern.MULTILINE);
+        Matcher m1 = p1.matcher(text);
+        if (m1.find()) {
+            if (m1.groupCount() == 1) {
+                return m1.group(1);
             } else {
-                throw new RuntimeException("error reading corner coordinates from gdalinfo: " + gdalInfoOutput);
+                throw new RuntimeException("error matching pattern " + pattern);
             }
         } else {
-            throw new RuntimeException("error reading corner coordinates from gdalinfo: " + gdalInfoOutput);
+            throw new RuntimeException("error matching pattern " + pattern);
         }
-
-        retArray[0] = latitude;
-        retArray[1] = longitude;
-
-        return retArray;
-    }
-
-    private static double[] determineMinMaxLatitudeLongitude(double[] upperLeftCornerCoords, double[] lowerLeftCornerCoords, double[] upperRightCornerCoords, double[] lowerRightCornerCoords) {
-        double[] retArray = new double[4];
-
-        List<Double> latitudeValues = new ArrayList<Double>();
-        latitudeValues.add(upperLeftCornerCoords[0]);
-        latitudeValues.add(lowerLeftCornerCoords[0]);
-        latitudeValues.add(upperRightCornerCoords[0]);
-        latitudeValues.add(lowerRightCornerCoords[0]);
-
-        double minLatitude = Collections.min(latitudeValues);
-        double maxLatitude = Collections.max(latitudeValues);
-
-        List<Double> longitudeValues = new ArrayList<Double>();
-        longitudeValues.add(upperLeftCornerCoords[1]);
-        longitudeValues.add(lowerLeftCornerCoords[1]);
-        longitudeValues.add(upperRightCornerCoords[1]);
-        longitudeValues.add(lowerRightCornerCoords[1]);
-
-        double minLongitude = Collections.min(longitudeValues);
-        double maxLongitude = Collections.max(longitudeValues);
-
-        retArray[0] = minLatitude;
-        retArray[1] = maxLatitude;
-        retArray[2] = minLongitude;
-        retArray[3] = maxLongitude;
-
-        return retArray;
     }
 
     private static PreparedStatement createLayersInsert(Connection conn, int layerId, String description, String path, String name, String displayPath, double minLatitude, double minLongitude,
