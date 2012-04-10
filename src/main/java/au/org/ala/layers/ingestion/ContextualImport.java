@@ -27,12 +27,13 @@ import org.apache.http.util.EntityUtils;
 public class ContextualImport {
     
     private static final String ALA_NAME_COLUMN_NAME = "ala_name";
+    private static final String GEOSERVER_QUERY_TEMPLATE = "<COMMON_GEOSERVER_URL>/gwc/service/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:{0}&format=image/png&styles=";
 
     // NOTE - layerName should match name of shape file (without the .shp on the
     // end)
     public static void main(String[] args) throws Exception {
-        if (args.length < 6) {
-            System.out.println("USAGE: ContextualImport shapeFilePath layerName layerDescription fieldsSid fieldsSname fieldsSdesc");
+        if (args.length < 11) {
+            System.out.println("USAGE: ContextualImport shapeFilePath reprojectedShapeFileDestination dbJdbcUrl dbUsername dbPassword geoserverUsername geoserverPassword layerName layerDescription fieldsSid fieldsSname [fieldsSdesc]");
             return;
         }
         
@@ -45,15 +46,14 @@ public class ContextualImport {
         String dbPassword = args[4];
         String geoserverUsername = args[5];
         String geoserverPassword = args[6];
-        String geoserverQueryTemplate = args[7];
-        String layerName = args[8];
-        String layerDescription = args[9];
-        String fieldsSid = args[10];
-        String fieldsSname = args[11];
+        String layerName = args[7];
+        String layerDescription = args[8];
+        String fieldsSid = args[9];
+        String fieldsSname = args[10];
 
         String fieldsSdesc = null;
-        if (args.length >= 13) {
-            fieldsSdesc = args[12];
+        if (args.length >= 12) {
+            fieldsSdesc = args[11];
         }
 
         System.out.println("Checking supplied paths for shape file and destination directory");
@@ -64,7 +64,7 @@ public class ContextualImport {
 
         File reprojectedShapeFileDestinationDir = new File(reprojectedShapeFileDestination);
         if (!reprojectedShapeFileDestinationDir.exists() || !reprojectedShapeFileDestinationDir.isDirectory()) {
-            throw new RuntimeException("Shape file " + shapeFilePath + " does not exist or is not a directory");
+            throw new RuntimeException("Directory " + reprojectedShapeFileDestinationDir + " does not exist or is not a directory");
         }
 
         System.out.println("Connecting to database");
@@ -192,7 +192,7 @@ public class ContextualImport {
             
 
             // insert to layers table
-            String displayPath = MessageFormat.format(geoserverQueryTemplate, layerName);
+            String displayPath = MessageFormat.format(GEOSERVER_QUERY_TEMPLATE, layerName);
             System.out.println("Creating layers table entry...");
             PreparedStatement createLayersStatement = createLayersInsert(conn, id, layerDescription, reprojectedShapeFileDestinationDir.getAbsolutePath(), layerName, displayPath, minLatitude, minLongitude, maxLatitude, maxLongitude);
             createLayersStatement.execute();
@@ -267,7 +267,7 @@ public class ContextualImport {
     private static PreparedStatement createLayersInsert(Connection conn, int layerId, String description, String path, String name, String displayPath, double minLatitude, double minLongitude,
             double maxLatitude, double maxLongitude) throws SQLException {
         PreparedStatement stLayersInsert = conn
-                .prepareStatement("INSERT INTO layers (id, name, description, type, path, displayPath, minlatitude, minlongitude, maxlatitude, maxlongitude, enabled, displayname, pid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+                .prepareStatement("INSERT INTO layers (id, name, description, type, path, displayPath, minlatitude, minlongitude, maxlatitude, maxlongitude, enabled, displayname, uid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
         stLayersInsert.setInt(1, layerId);
         stLayersInsert.setString(2, name);
         stLayersInsert.setString(3, description);
