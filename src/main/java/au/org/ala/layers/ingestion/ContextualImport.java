@@ -187,6 +187,10 @@ public class ContextualImport {
                     // write the layer name to the newly created column
                     PreparedStatement alaNameInsertionStatement = conn.prepareStatement(String.format("UPDATE \"%s\" SET %s = '%s' where true;", id, ALA_NAME_COLUMN_NAME, layerDescription));
                     alaNameInsertionStatement.execute();
+                    
+                    // need to run pgsql2shp to re-export the shape file here. The data in the database table and the shapefile
+                    //need to match each other
+                    //TODO run pgsqlshp here.
                 }
             }
             
