@@ -48,7 +48,6 @@ public class ContextualGeoserverLoader {
         // Create layer in geoserver
         System.out.println("Creating layer in geoserver...");
         DefaultHttpClient httpClient = new DefaultHttpClient();
-        //httpClient.getCredentialsProvider().setCredentials(new AuthScope("localhost", 8082), new UsernamePasswordCredentials(geoserverUsername, geoserverPassword));
         httpClient.getCredentialsProvider().setCredentials(new AuthScope(null, -1), new UsernamePasswordCredentials(geoserverUsername, geoserverPassword));
         HttpPost post = new HttpPost(geoserverBaseUrl + RELATIVE_URL_FOR_LAYER_CREATION);
         post.setHeader("Content-type", "text/xml");

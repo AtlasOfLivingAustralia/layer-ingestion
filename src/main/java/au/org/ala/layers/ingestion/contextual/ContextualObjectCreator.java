@@ -99,7 +99,7 @@ public class ContextualObjectCreator {
         // PreparedStatements, so we have to hardcode them
         PreparedStatement stLayersInsert = conn.prepareStatement(MessageFormat.format("INSERT INTO objects (pid, id, name, \"desc\", fid, the_geom, namesearch)"
                 + " SELECT nextval(''objects_id_seq''::regclass), {0}, MAX({1}), MAX({2}), ''{3}'', ST_UNION(the_geom), TRUE FROM \"{4}\" GROUP BY {5}", fieldsSid, fieldsSname,
-                fieldsSdesc == null ? "NULL" : fieldsSdesc, "cl" + Integer.toString(layerId), layerId, fieldsSid));
+                fieldsSdesc == null ? "NULL" : fieldsSdesc, "cl" + Integer.toString(layerId), Integer.toString(layerId), fieldsSid));
         return stLayersInsert;
     }
 
