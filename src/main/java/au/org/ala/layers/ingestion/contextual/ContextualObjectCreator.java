@@ -13,10 +13,27 @@ import org.ala.layers.stats.ObjectsStatsGenerator;
 public class ContextualObjectCreator {
 
     public static void main(String[] args) {
-
+        if (args.length < 4) {
+            System.out.println("Usage: layerId dbUsername dbPassword dbJdbcUrl" );
+            System.exit(1);
+        }
+        
+        int layerId = Integer.parseInt(args[0]);
+        String dbUsername = args[1];
+        String dbPassword = args[2];
+        String dbJdbcUrl = args[3];
+        
+        try {
+            boolean success = create(layerId, dbUsername, dbPassword, dbJdbcUrl);
+            if (!success) {
+                System.exit(1);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 
-    public static void create(int layerId, String dbUsername, String dbPassword, String dbJdbcUrl) throws Exception {
+    public static boolean create(int layerId, String dbUsername, String dbPassword, String dbJdbcUrl) throws Exception {
         System.out.println("Connecting to database");
         Class.forName("org.postgresql.Driver");
         Properties props = new Properties();
@@ -61,6 +78,7 @@ public class ContextualObjectCreator {
             conn.commit();
         } catch (Exception ex) {
             ex.printStackTrace();
+            return false;
         }
 
         // Run the object stats generator tool to do further operations on
@@ -70,7 +88,10 @@ public class ContextualObjectCreator {
             ObjectsStatsGenerator.main(new String[] { "10", dbJdbcUrl, dbUsername, dbPassword });
         } catch (Exception ex) {
             ex.printStackTrace();
+            return false;
         }
+        
+        return true;
     }
 
     private static PreparedStatement createObjectsInsert(Connection conn, int layerId, String fieldsSid, String fieldsSname, String fieldsSdesc) throws SQLException {
