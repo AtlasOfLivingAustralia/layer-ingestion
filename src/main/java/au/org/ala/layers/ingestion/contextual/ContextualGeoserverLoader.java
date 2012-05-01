@@ -19,9 +19,32 @@ public class ContextualGeoserverLoader {
      * @param args
      */
     public static void main(String[] args) throws Exception {
+        if (args.length < 6) {
+            System.out.println("Usage: geoserverBaseUrl geoserverUsername geoserverPassword layerId layerName layerDescription");
+            System.exit(1);
+        }
+        
+        String geoserverBaseUrl = args[0];
+        String geoserverUsername = args[1];
+        String geoserverPassword = args[2];
+        int layerId = Integer.parseInt(args[3]);
+        String layerName = args[4];
+        String layerDescription = args[5];
+        
+        try {
+            boolean success = load(geoserverBaseUrl, geoserverUsername, geoserverPassword, layerId, layerName, layerDescription);
+            if (!success) {
+                System.exit(1);
+            } else {
+                System.exit(0);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            System.exit(1);
+        }
     }
     
-    public static void load(String geoserverBaseUrl, String geoserverUsername, String geoserverPassword, int layerId, String layerName, String layerDescription) throws Exception {
+    public static boolean load(String geoserverBaseUrl, String geoserverUsername, String geoserverPassword, int layerId, String layerName, String layerDescription) throws Exception {
         // Create layer in geoserver
         System.out.println("Creating layer in geoserver...");
         DefaultHttpClient httpClient = new DefaultHttpClient();
@@ -51,6 +74,8 @@ public class ContextualGeoserverLoader {
         }
         
         EntityUtils.consume(response2.getEntity());
+        
+        return true;
     }
 
 }

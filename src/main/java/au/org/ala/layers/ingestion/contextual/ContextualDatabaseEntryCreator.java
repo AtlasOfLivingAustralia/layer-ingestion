@@ -24,12 +24,44 @@ public class ContextualDatabaseEntryCreator {
      * @param args
      */
     public static void main(String[] args) {
-        // TODO Auto-generated method stub
+        if (args.length < 12) {
+            System.out.println("Usage: layerId layerName layerDescription fieldsSid fieldsSname fieldsSdesc shapeFile dbUsername dbPassword dbJdbcUrl dbHost dbName");
+            System.exit(1);
+        }
 
+        int layerId = Integer.parseInt(args[0]);
+        String layerName = args[1];
+        String layerDescription = args[2];
+        String fieldsSid = args[3];
+        String fieldsSname = args[4];
+        String fieldsSdesc = args[5];
+        File shapeFile = new File(args[6]);
+        String dbUsername = args[7];
+        String dbPassword = args[8];
+        String dbJdbcUrl = args[9];
+        String dbHost = args[10];
+        String dbName = args[11];
+
+        try {
+            boolean success = create(layerId, layerName, layerDescription, fieldsSid, fieldsSname, fieldsSdesc, shapeFile, dbUsername, dbPassword, dbJdbcUrl, dbHost, dbName);
+            if (success) {
+                System.exit(0);
+            } else {
+                System.exit(1);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            System.exit(1);
+        }
     }
 
-    public static void create(int layerId, String layerName, String layerDescription, String fieldsSid, String fieldsSname, String fieldsSdesc, File shapeFile, String dbUsername, String dbPassword,
-            String dbJdbcUrl, String dbHost, String dbName) throws Exception {
+    public static boolean create(int layerId, String layerName, String layerDescription, String fieldsSid, String fieldsSname, String fieldsSdesc, File shapeFile, String dbUsername,
+            String dbPassword, String dbJdbcUrl, String dbHost, String dbName) throws Exception {
+        
+        if (!shapeFile.exists()) {
+            throw new IllegalArgumentException("File " + shapeFile.getAbsolutePath() + " does not exist");
+        }
+        
         // connect to the database
         System.out.println("Connecting to database");
         Class.forName("org.postgresql.Driver");
@@ -167,7 +199,10 @@ public class ContextualDatabaseEntryCreator {
         } catch (Exception ex) {
             ex.printStackTrace();
             conn.rollback();
+            return false;
         }
+
+        return true;
     }
 
     private static PreparedStatement createLayersInsert(Connection conn, int layerId, String description, String path, String name, String displayPath, double minLatitude, double minLongitude,

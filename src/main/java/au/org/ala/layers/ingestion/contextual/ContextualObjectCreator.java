@@ -3,6 +3,7 @@ package au.org.ala.layers.ingestion.contextual;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.Properties;
@@ -15,7 +16,7 @@ public class ContextualObjectCreator {
 
     }
 
-    public static void create(int layerId, String fieldsSid, String fieldsSname, String fieldsSdesc, String dbUsername, String dbPassword, String dbJdbcUrl) throws Exception {
+    public static void create(int layerId, String dbUsername, String dbPassword, String dbJdbcUrl) throws Exception {
         System.out.println("Connecting to database");
         Class.forName("org.postgresql.Driver");
         Properties props = new Properties();
@@ -25,6 +26,20 @@ public class ContextualObjectCreator {
         conn.setAutoCommit(false);
 
         try {
+            //Read field sid, name and description from fields table
+            System.out.println("Reading field sid, name and description...");
+            PreparedStatement fieldDetailsSelect = conn.prepareStatement("SELECT sid, sname, sdesc FROM fields where id = ?");
+            fieldDetailsSelect.setString(1, "cl" + Integer.toString(layerId));
+            ResultSet rs = fieldDetailsSelect.executeQuery();
+            
+            if (!rs.next()) {
+                throw new RuntimeException("No fields table entry for layer");
+            }
+            
+            String fieldsSid = rs.getString(1);
+            String fieldsSname = rs.getString(2);
+            String fieldsSdesc = rs.getString(3);
+            
             // insert to objects table
             System.out.println("Creating objects table entries...");
             PreparedStatement createObjectsStatement = createObjectsInsert(conn, layerId, fieldsSid, fieldsSname, fieldsSdesc);
