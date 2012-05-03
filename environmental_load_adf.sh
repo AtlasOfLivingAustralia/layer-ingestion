@@ -16,22 +16,22 @@ export GEOSERVERUSERNAME="admin"
 export GEOSERVERPASSWORD="at1as0f0z" 
 
 export PROCESS_DIR="/data/ala/data/layers/process"
-export DIVA_DIR ="/data/ala/data/layers/ready/diva"
+export DIVA_DIR="/data/ala/data/layers/ready/diva"
 export LEGEND_DIR="/data/ala/data/layers/test"
 export GEOTIFF_DIR="/data/ala/data/layers/ready/geotiff"
 
-export JAVA_CLASSPATH="./layer-ingestion-1.0-SNAPSHOT-jar-with-dependencies.jar:./lib/*"
+export JAVA_CLASSPATH="./layer-ingestion-1.0-SNAPSHOT.jar:./lib/*"
 
 echo "create process directory" /
 && mkdir -p "${PROCESS_DIR}/${LAYER_NAME}" /
 echo "convert adf to bil, reprojecting to WGS 84" /
 && gdalwarp -of EHdr -ot Float32 -t_srs EPSG:4326 "${ADF_HEADER_FILE}" "${PROCESS_DIR}/${LAYER_NAME}/${LAYER_NAME}.bil" /
-echo "convert bil to diva" /
-&& java -Xmx10G -cp "${JAVA_CLASSPATH}" Bil2diva "${PROCESS_DIR}/${LAYER_NAME}/${LAYER_NAME}" "${DIVA_DIR}/${LAYER_NAME}" "${UNITS}" /
-echo "generate sld legend file" /
-&& java -Xmx10G -cp "${JAVA_CLASSPATH}" org.ala.layers.legend.GridLegend "${DIVA_DIR}/${LAYER_NAME}" "${LEGEND_DIR}/${LAYER_NAME}" /
-echo "convert bil to geotiff" /
-&& gdal_translate -of GTiff "${PROCESS_DIR}/${LAYER_NAME}/${LAYER_NAME}.bil" "${GEOTIFF_DIR}/${LAYER_NAME}.tif" /
+&& echo "convert bil to diva" \
+&& java -Xmx10G -cp "${JAVA_CLASSPATH}" org.ala.layers.util.Bil2diva "${PROCESS_DIR}/${LAYER_NAME}/${LAYER_NAME}" "${DIVA_DIR}/${LAYER_NAME}" "${UNITS}" \
+&& echo "generate sld legend file" \
+&& java -Xmx10G -cp "${JAVA_CLASSPATH}" org.ala.layers.legend.GridLegend "${DIVA_DIR}/${LAYER_NAME}" "${LEGEND_DIR}/${LAYER_NAME}" \
+&& echo "convert bil to geotiff" \
+&& gdal_translate -of GTiff "${PROCESS_DIR}/${LAYER_NAME}/${LAYER_NAME}.bil" "${GEOTIFF_DIR}/${LAYER_NAME}.tif" \
 && echo "Creating layer and fields table entries for layer" \
 && java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.ingestion.environmental.EnvironmentalDatabaseEntryCreator "${LAYER_ID}" "${LAYER_NAME}" "${LAYER_DESCRIPTION}" "${UNITS}" "${DIVA_DIR}/${LAYER_NAME}.grd" "${DBUSERNAME}" "${DBPASSWORD}" "${DBJDBCURL}" \
 && echo "Load layer into geoserver" \
