@@ -75,8 +75,6 @@ public class EnvironmentalGeoserverLoader {
         String sldData = FileUtils.readFileToString(sldFile);
 
         HttpPut uploadSldPut = new HttpPut(String.format(geoserverBaseUrl + "/rest/styles/%s_style", layerName));
-        System.out.println(uploadSldPut.getURI().toString());
-        System.out.println(sldData);
         uploadSldPut.setHeader("Content-type", "application/vnd.ogc.sld+xml");
         uploadSldPut.setEntity(new StringEntity(sldData));
 
