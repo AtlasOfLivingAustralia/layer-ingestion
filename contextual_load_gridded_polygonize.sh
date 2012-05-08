@@ -1,7 +1,7 @@
 #!/bin/bash
-# Loads an environmental layer from raw .adf data
-# NOTE: The following 7 variables need to be modified for each new layer
-export SHAPEFILE="/data/ala/data/layers/raw/meow_ecos/meow_ecos.shp"
+# Loads an contextual layer from raw .adf data, polygonzing using gdal_polygonize
+# NOTE: The following 5 variables need to be modified for each new layer
+export ADF_HEADER_FILE="/data/ala/data/layers/raw/ga_bath_rocky/hdr.adf"
 export LAYERID="988"
 export LAYERNAME="meow_ecos"
 export LAYERDESCRIPTION="Marine Ecoregions of the World"

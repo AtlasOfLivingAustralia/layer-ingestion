@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 
-public class EnvironmentalDatabaseEntryCreator {
+public class EnvironmentalDatabaseLoader {
 
     private static final String GEOSERVER_QUERY_TEMPLATE = "<COMMON_GEOSERVER_URL>/gwc/service/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:{0}&format=image/png&styles=";
 
