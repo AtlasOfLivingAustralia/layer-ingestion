@@ -6,9 +6,6 @@ import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.sql.Types;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,12 +21,13 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
-public class ContextualDatabaseLoader {
+import au.org.ala.layers.ingestion.IngestionUtils;
+
+public class ContextualFromShapefileDatabaseLoader {
 
     private static final String GID_COLUMN_NAME = "gid";
     private static final String ALA_NAME_COLUMN_NAME = "ala_name";
-    private static final String GEOSERVER_QUERY_TEMPLATE = "<COMMON_GEOSERVER_URL>/gwc/service/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:{0}&format=image/png&styles=";
-
+    
     /**
      * @param args
      */
@@ -145,15 +143,16 @@ public class ContextualDatabaseLoader {
             }
 
             // insert to layers table
-            String displayPath = MessageFormat.format(GEOSERVER_QUERY_TEMPLATE, layerName);
+            String displayPath = MessageFormat.format(IngestionUtils.GEOSERVER_QUERY_TEMPLATE, layerName);
             System.out.println("Creating layers table entry...");
-            PreparedStatement createLayersStatement = createLayersInsert(conn, layerId, layerDescription, shapeFile.getParentFile().getAbsolutePath(), layerName, displayPath, minLatitude,
+            PreparedStatement createLayersStatement = IngestionUtils.createLayersInsertForContextual(conn, layerId, layerDescription, shapeFile.getParentFile().getAbsolutePath(), layerName, displayPath, minLatitude,
                     minLongitude, maxLatitude, maxLongitude);
             createLayersStatement.execute();
 
             // insert to fields table
             System.out.println("Creating fields table entry...");
-            PreparedStatement createFieldsStatement = createFieldsInsert(conn, layerId, layerName, layerDescription, fieldsSid, fieldsSname, fieldsSdesc);
+            String fieldId = IngestionUtils.CONTEXTUAL_FIELD_PREFIX + Integer.toString(layerId);
+            PreparedStatement createFieldsStatement = IngestionUtils.createFieldsInsert(conn, layerId, layerName, layerDescription, fieldId, IngestionUtils.CONTEXTUAL_REGULAR_FIELD_TYPE, fieldsSid, fieldsSname, fieldsSdesc, true, true, true, true, false, false, true, true);
             createFieldsStatement.execute();
 
             conn.commit();
@@ -342,57 +341,6 @@ public class ContextualDatabaseLoader {
         }
 
         return columnDefList;
-    }
-
-    private static PreparedStatement createLayersInsert(Connection conn, int layerId, String description, String path, String name, String displayPath, double minLatitude, double minLongitude,
-            double maxLatitude, double maxLongitude) throws SQLException {
-        PreparedStatement stLayersInsert = conn
-                .prepareStatement("INSERT INTO layers (id, name, description, type, path, displayPath, minlatitude, minlongitude, maxlatitude, maxlongitude, enabled, displayname, uid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
-        stLayersInsert.setInt(1, layerId);
-        stLayersInsert.setString(2, name);
-        stLayersInsert.setString(3, description);
-        stLayersInsert.setString(4, "Contextual");
-        stLayersInsert.setString(5, path);
-        stLayersInsert.setString(6, displayPath);
-        stLayersInsert.setDouble(7, minLatitude);
-        stLayersInsert.setDouble(8, minLongitude);
-        stLayersInsert.setDouble(9, maxLatitude);
-        stLayersInsert.setDouble(10, maxLongitude);
-        stLayersInsert.setBoolean(11, true);
-        stLayersInsert.setString(12, description);
-        stLayersInsert.setString(13, Integer.toString(layerId));
-        return stLayersInsert;
-    }
-
-    private static PreparedStatement createFieldsInsert(Connection conn, int layerId, String name, String description, String sid, String sname, String sdesc) throws SQLException {
-        // TOOD slightly different statement if sdesc is null...
-
-        PreparedStatement stFieldsInsert = conn
-                .prepareStatement("INSERT INTO fields (name, id, \"desc\", type, spid, sid, sname, sdesc, indb, enabled, last_update, namesearch, defaultlayer, \"intersect\", layerbranch)"
-                        + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
-        stFieldsInsert.setString(1, name);
-        stFieldsInsert.setString(2, "cl" + Integer.toString(layerId));
-        stFieldsInsert.setString(3, description);
-        stFieldsInsert.setString(4, "c");
-        stFieldsInsert.setString(5, Integer.toString(layerId));
-        stFieldsInsert.setString(6, sid);
-        stFieldsInsert.setString(7, sname);
-
-        if (sdesc == null || sdesc.isEmpty()) {
-            stFieldsInsert.setNull(8, Types.VARCHAR);
-        } else {
-            stFieldsInsert.setString(8, sdesc);
-        }
-
-        stFieldsInsert.setBoolean(9, true);
-        stFieldsInsert.setBoolean(10, true);
-        stFieldsInsert.setTimestamp(11, new Timestamp(System.currentTimeMillis()));
-        stFieldsInsert.setBoolean(12, true);
-        stFieldsInsert.setBoolean(13, false);
-        stFieldsInsert.setBoolean(14, false);
-        stFieldsInsert.setBoolean(15, false);
-
-        return stFieldsInsert;
     }
 
     private static class DerivedColumnDefinition {

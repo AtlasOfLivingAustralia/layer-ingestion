@@ -1,4 +1,4 @@
-package au.org.ala.layers.ingestion.environmental;
+package au.org.ala.layers.ingestion.contextual;
 
 import java.io.File;
 import java.sql.Connection;
@@ -11,28 +11,30 @@ import org.apache.commons.io.FileUtils;
 
 import au.org.ala.layers.ingestion.IngestionUtils;
 
-public class EnvironmentalDatabaseLoader {
+public class ContextualFromGridDatabaseLoader {
+
+    public static final String CLASSES_FIELD_SUFFIX = "a";
+    public static final String INDIVIDUAL_OBJECTS_FIELD_SUFFIX = "b";
 
     /**
      * @param args
      */
     public static void main(String[] args) {
-        if (args.length < 8) {
-            System.out.println("USAGE: layerId layerName layerDescription units divaGrdFile dbUsername dbPassword dbJdbcUrl");
+        if (args.length < 7) {
+            System.out.println("USAGE: layerId layerName layerDescription divaGrdFile dbUsername dbPassword dbJdbcUrl");
             System.exit(1); // Abnormal termination
         }
 
         int layerId = Integer.parseInt(args[0]);
         String layerName = args[1];
         String layerDescription = args[2];
-        String units = args[3];
-        File divaGrdFile = new File(args[4]);
-        String dbUsername = args[5];
-        String dbPassword = args[6];
-        String dbJdbcUrl = args[7];
+        File divaGrdFile = new File(args[3]);
+        String dbUsername = args[4];
+        String dbPassword = args[5];
+        String dbJdbcUrl = args[6];
 
         try {
-            boolean success = create(layerId, layerName, layerDescription, units, divaGrdFile, dbUsername, dbPassword, dbJdbcUrl);
+            boolean success = create(layerId, layerName, layerDescription, divaGrdFile, dbUsername, dbPassword, dbJdbcUrl);
             if (!success) {
                 // Abnormal termination
                 System.exit(1);
@@ -44,7 +46,7 @@ public class EnvironmentalDatabaseLoader {
         }
     }
 
-    public static boolean create(int layerId, String layerName, String layerDescription, String units, File divaGrdFile, String dbUsername, String dbPassword, String dbJdbcUrl) throws Exception {
+    public static boolean create(int layerId, String layerName, String layerDescription, File divaGrdFile, String dbUsername, String dbPassword, String dbJdbcUrl) throws Exception {
         System.out.println("Beginning environmetal load");
 
         System.out.println("Connecting to database");
@@ -64,8 +66,6 @@ public class EnvironmentalDatabaseLoader {
 
             String strDivaGrd = FileUtils.readFileToString(divaGrdFile);
 
-            float minValue = Float.parseFloat(IngestionUtils.matchPattern(strDivaGrd, "^MinValue=(.+)$"));
-            float maxValue = Float.parseFloat(IngestionUtils.matchPattern(strDivaGrd, "^MaxValue=(.+)$"));
             float minLatitude = Float.parseFloat(IngestionUtils.matchPattern(strDivaGrd, "^MinY=(.+)$"));
             float maxLatitude = Float.parseFloat(IngestionUtils.matchPattern(strDivaGrd, "^MaxY=(.+)$"));
             float minLongitude = Float.parseFloat(IngestionUtils.matchPattern(strDivaGrd, "^MinX=(.+)$"));
@@ -75,15 +75,23 @@ public class EnvironmentalDatabaseLoader {
             String displayPath = MessageFormat.format(IngestionUtils.GEOSERVER_QUERY_TEMPLATE, layerName);
             System.out.println("Creating layers table entry...");
 
-            PreparedStatement createLayersStatement = IngestionUtils.createLayersInsertForEnvironmental(conn, layerId, layerDescription, divaGrdFile.getParentFile().getAbsolutePath(), layerName,
-                    displayPath, minLatitude, minLongitude, maxLatitude, maxLongitude, minValue, maxValue, units);
+            PreparedStatement createLayersStatement = IngestionUtils.createLayersInsertForContextual(conn, layerId, layerDescription, divaGrdFile.getParentFile().getAbsolutePath(), layerName,
+                    displayPath, minLatitude, minLongitude, maxLatitude, maxLongitude);
             createLayersStatement.execute();
 
-            // insert to fields table
-            System.out.println("Creating fields table entry...");
-            String fieldId = IngestionUtils.ENVIRONMENTAL_FIELD_PREFIX + Integer.toString(layerId);
-            PreparedStatement createFieldsStatement = IngestionUtils.createFieldsInsert(conn, layerId, layerName, layerDescription, fieldId, IngestionUtils.ENVIRONMENTAL_FIELD_TYPE, null, null, null, true, true, false, true, false, false, true, true);
-            createFieldsStatement.execute();
+            // create fields table entry for class objects
+            System.out.println("Creating fields table entry for class objects...");
+            String classFieldId = IngestionUtils.CONTEXTUAL_FIELD_PREFIX + Integer.toString(layerId) + CLASSES_FIELD_SUFFIX;
+            PreparedStatement createClassesFieldStatement = IngestionUtils.createFieldsInsert(conn, layerId, layerName, layerDescription, classFieldId,
+                    IngestionUtils.CONTEXTUAL_FROM_GRID_CLASSES_FIELD_TYPE, null, null, null, true, true, true, true, true, false, true, true);
+            createClassesFieldStatement.execute();
+
+            // create fields table entry for individual objects
+            System.out.println("Creating fields table entry for individual objects...");
+            String individualObjectsFieldId = IngestionUtils.CONTEXTUAL_FIELD_PREFIX + Integer.toString(layerId) + INDIVIDUAL_OBJECTS_FIELD_SUFFIX;
+            PreparedStatement createIndividualObjectsFieldStatement = IngestionUtils.createFieldsInsert(conn, layerId, layerName, layerDescription, individualObjectsFieldId,
+                    IngestionUtils.CONTEXTUAL_FROM_GRID_CLASSES_FIELD_TYPE, null, null, null, false, true, false, false, false, false, false, true);
+            createIndividualObjectsFieldStatement.execute();
 
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -94,5 +102,4 @@ public class EnvironmentalDatabaseLoader {
         conn.commit();
         return true;
     }
-
 }

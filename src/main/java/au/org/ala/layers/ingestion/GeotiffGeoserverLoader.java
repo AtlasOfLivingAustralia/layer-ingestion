@@ -1,4 +1,4 @@
-package au.org.ala.layers.ingestion.environmental;
+package au.org.ala.layers.ingestion;
 
 import java.io.File;
 
@@ -12,7 +12,15 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 
-public class EnvironmentalGeoserverLoader {
+/**
+ * Used to create a layer in geoserver from a geotiff. This is used to load all
+ * environmental layers into geoserver, as well as any Contextual layers
+ * processed using the GridClassBuilder tool.
+ * 
+ * @author ChrisF
+ * 
+ */
+public class GeotiffGeoserverLoader {
     /**
      * @param args
      */
@@ -21,7 +29,7 @@ public class EnvironmentalGeoserverLoader {
             System.out.println("layerName geotiffFile sldFile geoserverBaseUrl geoserverUsername geoserverPassword");
             System.exit(1); // Abnormal termination
         }
-        
+
         String layerName = args[0];
         File geotiffFile = new File(args[1]);
         File sldFile = new File(args[2]);
@@ -37,7 +45,7 @@ public class EnvironmentalGeoserverLoader {
             System.exit(1);
         }
     }
-    
+
     public static void load(String layerName, File geotiffFile, File sldFile, String geoserverBaseUrl, String geoserverUsername, String geoserverPassword) throws Exception {
         DefaultHttpClient httpClient = new DefaultHttpClient();
         httpClient.getCredentialsProvider().setCredentials(new AuthScope(null, -1), new UsernamePasswordCredentials(geoserverUsername, geoserverPassword));

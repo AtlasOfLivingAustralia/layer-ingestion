@@ -33,7 +33,7 @@ echo "create process directory" \
 && echo "convert bil to geotiff" \
 && gdal_translate -of GTiff "${PROCESS_DIR}/${LAYER_NAME}/${LAYER_NAME}.bil" "${GEOTIFF_DIR}/${LAYER_NAME}.tif" \
 && echo "Creating layer and fields table entries for layer" \
-&& java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.ingestion.environmental.EnvironmentalDatabaseEntryCreator "${LAYER_ID}" "${LAYER_NAME}" "${LAYER_DESCRIPTION}" "${UNITS}" "${DIVA_DIR}/${LAYER_NAME}.grd" "${DBUSERNAME}" "${DBPASSWORD}" "${DBJDBCURL}" \
+&& java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.ingestion.environmental.EnvironmentalDatabaseLoader "${LAYER_ID}" "${LAYER_NAME}" "${LAYER_DESCRIPTION}" "${UNITS}" "${DIVA_DIR}/${LAYER_NAME}.grd" "${DBUSERNAME}" "${DBPASSWORD}" "${DBJDBCURL}" \
 && echo "Load layer into geoserver" \
-&& java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.ingestion.environmental.EnvironmentalGeoserverLoader "${LAYER_NAME}" "${GEOTIFF_DIR}/${LAYER_NAME}.tif" "${LEGEND_DIR}/${LAYER_NAME}.sld" "${GEOSERVERBASEURL}" "${GEOSERVERUSERNAME}" "${GEOSERVERPASSWORD}"
+&& java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.ingestion.GeotiffGeoserverLoader "${LAYER_NAME}" "${GEOTIFF_DIR}/${LAYER_NAME}.tif" "${LEGEND_DIR}/${LAYER_NAME}.sld" "${GEOSERVERBASEURL}" "${GEOSERVERUSERNAME}" "${GEOSERVERPASSWORD}"
 
