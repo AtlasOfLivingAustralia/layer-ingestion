@@ -152,7 +152,7 @@ public class ContextualFromShapefileDatabaseLoader {
             // insert to fields table
             System.out.println("Creating fields table entry...");
             String fieldId = IngestionUtils.CONTEXTUAL_FIELD_PREFIX + Integer.toString(layerId);
-            PreparedStatement createFieldsStatement = IngestionUtils.createFieldsInsert(conn, layerId, layerName, layerDescription, fieldId, IngestionUtils.CONTEXTUAL_REGULAR_FIELD_TYPE, fieldsSid, fieldsSname, fieldsSdesc, true, true, true, true, false, false, true, true);
+            PreparedStatement createFieldsStatement = IngestionUtils.createFieldsInsert(conn, layerId, layerDescription, layerDescription, fieldId, IngestionUtils.CONTEXTUAL_REGULAR_FIELD_TYPE, fieldsSid, fieldsSname, fieldsSdesc, true, true, true, true, false, false, true, true);
             createFieldsStatement.execute();
 
             conn.commit();

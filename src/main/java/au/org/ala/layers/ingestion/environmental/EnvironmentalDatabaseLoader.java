@@ -82,7 +82,7 @@ public class EnvironmentalDatabaseLoader {
             // insert to fields table
             System.out.println("Creating fields table entry...");
             String fieldId = IngestionUtils.ENVIRONMENTAL_FIELD_PREFIX + Integer.toString(layerId);
-            PreparedStatement createFieldsStatement = IngestionUtils.createFieldsInsert(conn, layerId, layerName, layerDescription, fieldId, IngestionUtils.ENVIRONMENTAL_FIELD_TYPE, null, null, null, true, true, false, true, false, false, true, true);
+            PreparedStatement createFieldsStatement = IngestionUtils.createFieldsInsert(conn, layerId, layerDescription, layerDescription, fieldId, IngestionUtils.ENVIRONMENTAL_FIELD_TYPE, null, null, null, true, true, false, true, false, false, true, true);
             createFieldsStatement.execute();
 
         } catch (Exception ex) {

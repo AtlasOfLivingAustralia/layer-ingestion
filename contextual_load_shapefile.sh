@@ -1,5 +1,5 @@
 #!/bin/bash
-# Loads an environmental layer from raw .adf data
+# Loads a contextual layer using from a shape file (.shp)
 # NOTE: The following 7 variables need to be modified for each new layer
 export SHAPEFILE="/data/ala/data/layers/raw/meow_ecos/meow_ecos.shp"
 export LAYERID="988"

@@ -82,7 +82,7 @@ public class ContextualFromGridDatabaseLoader {
             // create fields table entry for class objects
             System.out.println("Creating fields table entry for class objects...");
             String classFieldId = IngestionUtils.CONTEXTUAL_FIELD_PREFIX + Integer.toString(layerId) + CLASSES_FIELD_SUFFIX;
-            PreparedStatement createClassesFieldStatement = IngestionUtils.createFieldsInsert(conn, layerId, layerName, layerDescription, classFieldId,
+            PreparedStatement createClassesFieldStatement = IngestionUtils.createFieldsInsert(conn, layerId, layerDescription, layerDescription, classFieldId,
                     IngestionUtils.CONTEXTUAL_FROM_GRID_CLASSES_FIELD_TYPE, null, null, null, true, true, true, true, true, false, true, true);
             createClassesFieldStatement.execute();
 
