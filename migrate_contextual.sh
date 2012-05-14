@@ -12,6 +12,9 @@ export DEV_DB_PASSWORD=postgres
 export PROD_DB_JDBC_URL="jdbc:postgresql://ala-maps-db.vic.csiro.au:5432/layersdb"
 export PROD_DB_USERNAME=postgres
 export PROD_DB_PASSWORD=postgres
+export PROD_DB_HOST="ala-maps-db.vic.csiro.au"
+export PROD_DB_NAME="layersdb"
+
 
 export GEOSERVERBASEURL="http://localhost:8082/geoserver"
 export GEOSERVERUSERNAME="admin"
@@ -28,13 +31,18 @@ echo "Copy shape file from dev server" \
 && echo "copy database entries from dev database" \
 && java -Xmx10G -cp "${JAVA_CLASSPATH}" MigrateLayerDatabaseEntries "${LAYER_ID}" "${DEV_DB_JDBC_URL}" "${DEV_DB_USERNAME}" "${DEV_DB_PASSWORD}" "${PROD_DB_JDBC_URL}" "${PROD_DB_USERNAME}" "${PROD_DB_PASSWORD}" \
 && echo "Create database table from shapefile" \
-&& echo "TODO  "shp2pgsql", "-I", "-s", "4326", shapeFile.getAbsolutePath(), Integer.toString(layerId) " \
-&& echo "Create objects" \
-&& echo "TODO" \
-&& echo "Download sld file from dev db" \
-&& wget http://spatial-dev.ala.org.au/geoserver/rest/styles/${LAYER_ID}_style.sld \
+&& shp2pgsql -I -s 4326 "${SHAPE_DIR}/${LAYER_SHORT_NAME}.shp" "${LAYER_ID}" | psql -h "${PROD_DB_HOST}" -d "${PROD_DB_NAME}" -U "${PROD_DB_USERNAME}"
+&& echo "Create objects from layer" \
+&& java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.ingestion.contextual.ContextualObjectCreator "${LAYER_ID}" "${PROD_DB_USERNAME}" "${PROD_DB_PASSWORD}" "${PROD_DB_JDBC_URL}" \
 && echo "Load layer in geoserver" \
-&& java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.ingestion.PostgisTableGeoserverLoader "${GEOSERVERBASEURL}" "${GEOSERVERUSERNAME}" "${GEOSERVERPASSWORD}" "${LAYERID}" "${LAYERNAME}" "${LAYERDESCRIPTION}"
+&& java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.ingestion.PostgisTableGeoserverLoader "${GEOSERVERBASEURL}" "${GEOSERVERUSERNAME}" "${GEOSERVERPASSWORD}" "${LAYER_ID}" "${LAYER_SHORT_NAME}" "${LAYER_DESCRIPTION}"
+
+
+#&& echo "Download sld file from dev db" \
+#&& wget http://spatial-dev.ala.org.au/geoserver/rest/styles/${LAYER_ID}_style.sld \
+
+
+
 # Analysis files
 # Tabulation data
 # Layer thumbnails

@@ -90,8 +90,6 @@ public class MigrateLayerDatabaseEntries {
                 throw new RuntimeException("No layers table entry for layer id " + layerId);
             }
             
-            String layerType = devLayersResult.getString(LAYER_TYPE_COLUMN_NAME);
-            
             PreparedStatement layersInsertStmt = createLayersInsertStatement(prodConn, devLayersResult);
             layersInsertStmt.execute();
 
@@ -108,10 +106,7 @@ public class MigrateLayerDatabaseEntries {
                 PreparedStatement fieldsInsertStatement = createFieldsInsertStatement(prodConn, devFieldsResult);
                 fieldsInsertStatement.execute();
                 numFieldsRows++;
-            }
-            
-            // If layer type is contextual, and there is only 1 fields 
-            
+            }          
             
             prodConn.commit();
         } catch (Exception ex) {
