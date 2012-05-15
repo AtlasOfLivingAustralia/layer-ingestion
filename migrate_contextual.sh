@@ -22,12 +22,12 @@ export GEOSERVERPASSWORD="at1as0f0z"
 
 export JAVA_CLASSPATH="./layer-ingestion-1.0-SNAPSHOT:./lib/*"
 
-echo "Copy shape file from dev server" \
-&& scp ${SSH_USERNAME}@${DEV_SERVER}:${SHAPE_DIR}/${LAYER_SHORT_NAME}.shp ${SHAPE_DIR} \
-&& echo "Change mode of copied shapefile" \
-&& chmod 777 ${SHAPE_DIR}/${LAYER_SHORT_NAME}.shp \
-&& echo "Change ownership of copied shapefile" \
-&& chown tomcat:10 ${SHAPE_DIR}/${LAYER_SHORT_NAME}.shp \
+echo "Copy shape files from dev server" \
+&& scp ${SSH_USERNAME}@${DEV_SERVER}:${SHAPE_DIR}/${LAYER_SHORT_NAME}.* ${SHAPE_DIR} \
+&& echo "Change mode of copied shape files" \
+&& chmod 777 ${SHAPE_DIR}/${LAYER_SHORT_NAME}.* \
+&& echo "Change ownership of copied shape files" \
+&& chown tomcat:10 ${SHAPE_DIR}/${LAYER_SHORT_NAME}.* \
 && echo "copy database entries from dev database" \
 && java -Xmx10G -cp "${JAVA_CLASSPATH}" MigrateLayerDatabaseEntries "${LAYER_ID}" "${DEV_DB_JDBC_URL}" "${DEV_DB_USERNAME}" "${DEV_DB_PASSWORD}" "${PROD_DB_JDBC_URL}" "${PROD_DB_USERNAME}" "${PROD_DB_PASSWORD}" \
 && echo "Create database table from shapefile" \
