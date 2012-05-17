@@ -24,8 +24,8 @@ echo "Preparing contextual layers for analysis" \
 && java -Xmx10G -cp "${JAVA_CLASSPATH}" org.ala.spatial.analysis.index.LayerDistanceIndex "${DIVA_DIR}" "${DIVA_CACHE_DIR} \
 && echo "Generating tabulation for contextual layers"
 && java -Xmx10G -cp "${JAVA_CLASSPATH}" org.ala.layers.tabulation.TabulationGenerator "${DB_JDBC_URL}" "${DB_USERNAME}" "${DB_PASSWORD}" 1 \
-&& -Xmx20G -cp "${JAVA_CLASSPATH}" org.ala.layers.tabulation.TabulationGenerator "${DB_JDBC_URL}" "${DB_USERNAME}" "${DB_PASSWORD}" 3 \
-&& -Xmx20G -cp "${JAVA_CLASSPATH}" org.ala.layers.tabulation.TabulationGenerator "${DB_JDBC_URL}" "${DB_USERNAME}" "${DB_PASSWORD}" 5 "${PATH_TO_RECORDS_CSV}" \
-&& -Xmx20G -cp "${JAVA_CLASSPATH}" org.ala.layers.tabulation.TabulationGenerator "${DB_JDBC_URL}" "${DB_USERNAME}" "${DB_PASSWORD}" 6 "${PATH_TO_RECORDS_CSV}" \
-&& -Xmx20G -cp "${JAVA_CLASSPATH}" org.ala.layers.tabulation.TabulationGenerator "${DB_JDBC_URL}" "${DB_USERNAME}" "${DB_PASSWORD}" 4
+&& -Xmx10G -cp "${JAVA_CLASSPATH}" org.ala.layers.tabulation.TabulationGenerator "${DB_JDBC_URL}" "${DB_USERNAME}" "${DB_PASSWORD}" 3 \
+&& -Xmx10G -cp "${JAVA_CLASSPATH}" org.ala.layers.tabulation.TabulationGenerator "${DB_JDBC_URL}" "${DB_USERNAME}" "${DB_PASSWORD}" 5 "${PATH_TO_RECORDS_CSV}" \
+&& -Xmx10G -cp "${JAVA_CLASSPATH}" org.ala.layers.tabulation.TabulationGenerator "${DB_JDBC_URL}" "${DB_USERNAME}" "${DB_PASSWORD}" 6 "${PATH_TO_RECORDS_CSV}" \
+&& -Xmx10G -cp "${JAVA_CLASSPATH}" org.ala.layers.tabulation.TabulationGenerator "${DB_JDBC_URL}" "${DB_USERNAME}" "${DB_PASSWORD}" 4
 
