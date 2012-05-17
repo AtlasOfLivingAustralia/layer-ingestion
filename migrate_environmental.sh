@@ -40,7 +40,7 @@ echo "Copy diva files from dev server" \
 && echo "copy sld legend file from dev geoserver to current directory" \
 && wget http://spatial-dev.ala.org.au/geoserver/rest/styles/${LAYER_SHORT_NAME}_style.sld \
 && echo "Load layer into geoserver" \
-&& java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.ingestion.GeotiffGeoserverLoader "${LAYER_NAME}" "${GEOTIFF_DIR}/${LAYER_NAME}.tif" "./${LAYER_SHORT_NAME}_style.sld" "${GEOSERVERBASEURL}" "${GEOSERVERUSERNAME}" "${GEOSERVERPASSWORD}"
+&& java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.ingestion.GeotiffGeoserverLoader "${LAYER_SHORT_NAME}" "${GEOTIFF_DIR}/${LAYER_SHORT_NAME}.tif" "./${LAYER_SHORT_NAME}_style.sld" "${GEOSERVERBASEURL}" "${GEOSERVERUSERNAME}" "${GEOSERVERPASSWORD}" \
 && echo "delete temporary sld file" \
 && rm "./${LAYER_SHORT_NAME}_style.sld"
 

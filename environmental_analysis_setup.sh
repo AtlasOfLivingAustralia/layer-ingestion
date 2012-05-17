@@ -9,9 +9,9 @@ echo "backup diva cache directory" \
 && echo "deleting contents of diva_cache directory" \
 && rm "${DIVA_CACHE_DIR}/*" \
 && echo "running GridCacheBuilder" \
-&& java -Xmx20G -cp "${JAVA_CLASSPATH}" org.ala.layers.grid.GridCacheBuilder "${DIVA_DIR}" "${DIVA_CACHE_DIR} \
+&& java -Xmx20G -cp "${JAVA_CLASSPATH}" org.ala.layers.grid.GridCacheBuilder "${DIVA_DIR}" "${DIVA_CACHE_DIR}" \
 && echo "Preparing environmental layers for analysis" \
 && java -Xmx20G -DANALYSIS_RESOLUTIONS=0.5,0.01 -cp "${JAVA_CLASSPATH}" org.ala.layers.util.AnalysisLayerUtil auto grids \
 && echo "Calculating layer distance values" \
-&& java -Xmx20G -cp "${JAVA_CLASSPATH}" org.ala.spatial.analysis.index.LayerDistanceIndex "${DIVA_DIR}" "${DIVA_CACHE_DIR} \
+&& java -Xmx20G -cp "${JAVA_CLASSPATH}" org.ala.spatial.analysis.index.LayerDistanceIndex "${DIVA_DIR}" "${DIVA_CACHE_DIR}
 
