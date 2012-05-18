@@ -15,15 +15,15 @@ echo "backup diva cache directory" \
 && echo "deleting contents of diva_cache directory" \
 && rm "${DIVA_CACHE_DIR}/*" \
 && echo "running GridCacheBuilder" \
-&& java -Xmx10G -cp "${JAVA_CLASSPATH}" org.ala.layers.grid.GridCacheBuilder "${DIVA_DIR}" "${DIVA_CACHE_DIR}" \
+&& java -Xmx14G -cp "${JAVA_CLASSPATH}" org.ala.layers.grid.GridCacheBuilder "${DIVA_DIR}" "${DIVA_CACHE_DIR}" \
 && echo "Preparing environmental layers for analysis" \
-&& java -Xmx10G -DANALYSIS_RESOLUTIONS=0.5,0.01 -cp "${JAVA_CLASSPATH}" org.ala.layers.util.AnalysisLayerUtil auto grids \
-echo "Preparing contextual layers for analysis" \
-&& java -Xmx10G -DANALYSIS_RESOLUTIONS=0.5 -cp "${JAVA_CLASSPATH}" org.ala.layers.util.AnalysisLayerUtil auto shapes \
-&& echo "Calculating layer distance values" \
-&& java -Xmx10G -cp "${JAVA_CLASSPATH}" org.ala.spatial.analysis.index.LayerDistanceIndex "${DIVA_DIR}" "${DIVA_CACHE_DIR} \
-&& echo "Generating tabulation for contextual layers"
-&& java -Xmx10G -cp "${JAVA_CLASSPATH}" org.ala.layers.tabulation.TabulationGenerator "${DB_JDBC_URL}" "${DB_USERNAME}" "${DB_PASSWORD}" 1 \
+&& java -Xmx14G -DANALYSIS_RESOLUTIONS=0.5,0.01,0.025 -cp "${JAVA_CLASSPATH}" org.ala.layers.util.AnalysisLayerUtil auto grids \
+&& echo "Calculating environmental layer distance values" \
+&& java -Xmx14G -cp "${JAVA_CLASSPATH}" org.ala.spatial.analysis.index.LayerDistanceIndex "${DIVA_DIR}" "${DIVA_CACHE_DIR}" \
+&& echo "Preparing contextual layers for analysis" \
+&& java -Xmx14G -DANALYSIS_RESOLUTIONS=0.5 -cp "${JAVA_CLASSPATH}" org.ala.layers.util.AnalysisLayerUtil auto shapes \
+&& echo "Generating tabulation for contextual layers" \
+&& java -Xmx14G -cp "${JAVA_CLASSPATH}" org.ala.layers.tabulation.TabulationGenerator "${DB_JDBC_URL}" "${DB_USERNAME}" "${DB_PASSWORD}" 1 \
 && -Xmx10G -cp "${JAVA_CLASSPATH}" org.ala.layers.tabulation.TabulationGenerator "${DB_JDBC_URL}" "${DB_USERNAME}" "${DB_PASSWORD}" 3 \
 && -Xmx10G -cp "${JAVA_CLASSPATH}" org.ala.layers.tabulation.TabulationGenerator "${DB_JDBC_URL}" "${DB_USERNAME}" "${DB_PASSWORD}" 5 "${PATH_TO_RECORDS_CSV}" \
 && -Xmx10G -cp "${JAVA_CLASSPATH}" org.ala.layers.tabulation.TabulationGenerator "${DB_JDBC_URL}" "${DB_USERNAME}" "${DB_PASSWORD}" 6 "${PATH_TO_RECORDS_CSV}" \
