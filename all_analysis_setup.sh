@@ -1,12 +1,12 @@
 #!/bin/bash
 export PATH_TO_RECORDS_CSV="/data/ala/data/layers/process/density/_records.csv"
 
-export JAVA_CLASSPATH="./layer-ingestion-1.0-SNAPSHOT.jar:./lib/*"
+export JAVA_CLASSPATH="./layer-ingestion-1.0-SNAPSHOT.jar"
 export READY_DIR="/data/ala/data/layers/ready"
 export DIVA_DIR="/data/ala/data/layers/ready/diva"
 export DIVA_CACHE_DIR="/data/ala/data/layers/ready/diva_cache"
 
-export DB_JDBC_URL="jdbc:postgresql://ala-devmaps-db.vm.csiro.au:5432/layersdb"
+export DB_JDBC_URL="jdbc:postgresql://ala-maps-db.vic.csiro.au:5432/layersdb"
 export DB_USERNAME="postgres"
 export DB_PASSWORD="postgres"
 

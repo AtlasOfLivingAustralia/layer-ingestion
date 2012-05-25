@@ -20,7 +20,7 @@ export DIVA_DIR="/data/ala/data/layers/ready/diva"
 export LEGEND_DIR="/data/ala/data/layers/test"
 export GEOTIFF_DIR="/data/ala/data/layers/ready/geotiff"
 
-export JAVA_CLASSPATH="./layer-ingestion-1.0-SNAPSHOT.jar:./lib/*"
+export JAVA_CLASSPATH="./layer-ingestion-1.0-SNAPSHOT.jar"
 
 echo "create process directory" \
 && mkdir -p "${PROCESS_DIR}/${LAYER_NAME}" \

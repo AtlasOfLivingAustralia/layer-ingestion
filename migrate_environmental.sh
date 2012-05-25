@@ -21,7 +21,7 @@ export GEOSERVERBASEURL="http://localhost:8082/geoserver"
 export GEOSERVERUSERNAME="admin"
 export GEOSERVERPASSWORD="at1as0f0z"
 
-export JAVA_CLASSPATH="./layer-ingestion-1.0-SNAPSHOT.jar:./lib/*"
+export JAVA_CLASSPATH="./layer-ingestion-1.0-SNAPSHOT.jar"
 
 echo "Copy diva files from dev server" \
 && scp ${SSH_USERNAME}@${DEV_SERVER}:${DIVA_DIR}/${LAYER_SHORT_NAME}.* ${DIVA_DIR} \
