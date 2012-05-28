@@ -8,12 +8,12 @@ export UNITS="%"
 export ADF_HEADER_FILE="/data/ala/data/layers/raw/ga_bath_rocky/hdr.adf"
 
 export DBUSERNAME="postgres"
-export DBPASSWORD="postgres"
+export DBPASSWORD="password"
 export DBJDBCURL="jdbc:postgresql://ala-devmaps-db.vm.csiro.au:5432/layersdb"
 
 export GEOSERVERBASEURL="http://localhost:8082/geoserver"
 export GEOSERVERUSERNAME="admin"
-export GEOSERVERPASSWORD="at1as0f0z" 
+export GEOSERVERPASSWORD="password" 
 
 export PROCESS_DIR="/data/ala/data/layers/process"
 export DIVA_DIR="/data/ala/data/layers/ready/diva"

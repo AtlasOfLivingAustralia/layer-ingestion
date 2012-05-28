@@ -8,12 +8,12 @@ export UNITS="m"
 export RAW_BIL_FILE="/data/ala/data/layers/raw/gbr_gbr100/gbr_gbr100.bil"
 
 export DBUSERNAME="postgres"
-export DBPASSWORD="postgres"
+export DBPASSWORD="password"
 export DBJDBCURL="jdbc:postgresql://ala-devmaps-db.vm.csiro.au:5432/layersdb"
 
 export GEOSERVERBASEURL="http://localhost:8082/geoserver"
 export GEOSERVERUSERNAME="admin"
-export GEOSERVERPASSWORD="at1as0f0z" 
+export GEOSERVERPASSWORD="password" 
 
 export PROCESS_DIR="/data/ala/data/layers/process"
 export DIVA_DIR="/data/ala/data/layers/ready/diva"

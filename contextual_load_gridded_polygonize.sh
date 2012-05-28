@@ -12,14 +12,14 @@ export DERIVED_COLUMNS_FILE=""
 export LEGEND_FILE=""
 
 export DB_USERNAME="postgres"
-export DB_PASSWORD="postgres"
+export DB_PASSWORD="password"
 export DB_HOST="ala-devmaps-db.vm.csiro.au"
 export DB_NAME="layersdb"
 export DB_JDBC_URL="jdbc:postgresql://ala-devmaps-db.vm.csiro.au:5432/layersdb"
 
 export GEOSERVER_BASE_URL="http://localhost:8082/geoserver"
 export GEOSERVER_USERNAME="admin"
-export GEOSERVER_PASSWORD="at1as0f0z"
+export GEOSERVER_PASSWORD="password"
 
 export PROCESS_DIR="/data/ala/data/layers/process"
 export LEGEND_DIR="/data/ala/data/layers/test"

@@ -9,17 +9,17 @@ export GEOTIFF_DIR="/data/ala/data/layers/ready/geotiff"
 
 export DEV_DB_JDBC_URL="jdbc:postgresql://ala-devmaps-db.vm.csiro.au:5432/layersdb"
 export DEV_DB_USERNAME=postgres
-export DEV_DB_PASSWORD=postgres
+export DEV_DB_PASSWORD=password
 export PROD_DB_JDBC_URL="jdbc:postgresql://ala-maps-db.vic.csiro.au:5432/layersdb"
 export PROD_DB_USERNAME=postgres
-export PROD_DB_PASSWORD=postgres
+export PROD_DB_PASSWORD=password
 export PROD_DB_HOST="ala-maps-db.vic.csiro.au"
 export PROD_DB_NAME="layersdb"
 
 
 export GEOSERVERBASEURL="http://localhost:8082/geoserver"
 export GEOSERVERUSERNAME="admin"
-export GEOSERVERPASSWORD="at1as0f0z"
+export GEOSERVERPASSWORD="password"
 
 export JAVA_CLASSPATH="./layer-ingestion-1.0-SNAPSHOT.jar:./lib/*"
 
