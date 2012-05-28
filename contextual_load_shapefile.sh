@@ -21,7 +21,7 @@ export GEOSERVERPASSWORD="at1as0f0z"
 
 export REPROJECTEDSHAPEFILE="/data/ala/data/layers/ready/shape/${LAYERNAME}.shp"
 
-export JAVA_CLASSPATH="./layer-ingestion-1.0-SNAPSHOT.jar"
+export JAVA_CLASSPATH="./layer-ingestion-1.0-SNAPSHOT.jar:./lib/*"
 
 echo "Reprojecting shapefile to WGS 84" \
 && ogr2ogr -t_srs EPSG:4326  "${REPROJECTEDSHAPEFILE}" "${SHAPEFILE}" \

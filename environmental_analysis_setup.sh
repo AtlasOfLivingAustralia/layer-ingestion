@@ -1,5 +1,5 @@
 #!/bin/bash
-export JAVA_CLASSPATH="./layer-ingestion-1.0-SNAPSHOT.jar"
+export JAVA_CLASSPATH="./layer-ingestion-1.0-SNAPSHOT.jar:./lib/*"
 export READY_DIR="/data/ala/data/layers/ready"
 export DIVA_DIR="/data/ala/data/layers/ready/diva"
 export DIVA_CACHE_DIR="/data/ala/data/layers/ready/diva_cache"

@@ -1,5 +1,5 @@
 #!/bin/bash
-export JAVA_CLASSPATH="./layer-ingestion-1.0-SNAPSHOT"
+export JAVA_CLASSPATH="./layer-ingestion-1.0-SNAPSHOT.jar:./lib/*"
 
 echo "Preparing contextual layers for analysis" \
 && java -Xmx10G -DANALYSIS_RESOLUTIONS=0.5 -cp "${JAVA_CLASSPATH}" org.ala.layers.util.AnalysisLayerUtil auto shapes \

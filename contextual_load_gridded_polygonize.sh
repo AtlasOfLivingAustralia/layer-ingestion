@@ -28,7 +28,7 @@ export GEOTIFF_DIR="/data/ala/data/layers/ready/geotiff"
 export SHAPEFILE="${PROCESS_DIR}/${LAYER_NAME}/${LAYER_NAME}.shp"
 export REPROJECTEDSHAPEFILE="/data/ala/data/layers/ready/shape/${LAYER_NAME}.shp"
 
-export JAVA_CLASSPATH="./layer-ingestion-1.0-SNAPSHOT.jar"
+export JAVA_CLASSPATH="./layer-ingestion-1.0-SNAPSHOT.jar:./lib/*"
 
 echo "Copy legend file to legend directory" \
 && cp ${LEGEND_FILE} "${LEGEND_DIR}/${LAYER_NAME}.sld" \
