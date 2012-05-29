@@ -1,4 +1,7 @@
 #!/bin/bash
+# This script is used to migrate contextual layers created from shape files, or
+# polygonized from gridded data, and which also use a custom sld legend.
+# The following 4 variables must have the values set for the layer being loaded:
 export SSH_USERNAME=fle13g
 export LAYER_ID=990
 export LAYER_SHORT_NAME=alwc4
@@ -35,8 +38,12 @@ echo "Copy shape files from dev server" \
 && shp2pgsql -I -s 4326 "${SHAPE_DIR}/${LAYER_SHORT_NAME}.shp" "${LAYER_ID}" | psql -h "${PROD_DB_HOST}" -d "${PROD_DB_NAME}" -U "${PROD_DB_USERNAME}" \
 && echo "Create objects from layer" \
 && java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.ingestion.contextual.ContextualObjectCreator "${LAYER_ID}" "${PROD_DB_USERNAME}" "${PROD_DB_PASSWORD}" "${PROD_DB_JDBC_URL}" \
+&& echo "copy sld legend file from dev geoserver to current directory" \
+&& wget http://spatial-dev.ala.org.au/geoserver/rest/styles/${LAYER_SHORT_NAME}_style.sld \
 && echo "Load layer in geoserver" \
-&& java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.ingestion.PostgisTableGeoserverLoader "${GEOSERVERBASEURL}" "${GEOSERVERUSERNAME}" "${GEOSERVERPASSWORD}" "${LAYER_ID}" "${LAYER_SHORT_NAME}" "${LAYER_DESCRIPTION}"
+&& java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.ingestion.PostgisTableGeoserverLoader "${GEOSERVERBASEURL}" "${GEOSERVERUSERNAME}" "${GEOSERVERPASSWORD}" "${LAYER_ID}" "${LAYER_SHORT_NAME}" "${LAYER_DESCRIPTION}" "./${LAYER_SHORT_NAME}_style.sld" \
+&& echo "delete temporary sld file" \
+&& echo rm "./${LAYER_SHORT_NAME}_style.sld"
 
 # Layer thumbnails
 

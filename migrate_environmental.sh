@@ -1,4 +1,6 @@
 #!/bin/bash
+# This script is used to migrate environmental layers to the production server.
+# The following 3 variables must have the values set for the layer being loaded:
 export SSH_USERNAME=fle13g
 export LAYER_ID=990
 export LAYER_SHORT_NAME=alwc4

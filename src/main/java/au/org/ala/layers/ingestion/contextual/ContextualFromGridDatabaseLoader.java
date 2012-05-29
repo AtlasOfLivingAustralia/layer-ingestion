@@ -90,7 +90,7 @@ public class ContextualFromGridDatabaseLoader {
             System.out.println("Creating fields table entry for individual objects...");
             String individualObjectsFieldId = IngestionUtils.CONTEXTUAL_FIELD_PREFIX + Integer.toString(layerId) + INDIVIDUAL_OBJECTS_FIELD_SUFFIX;
             PreparedStatement createIndividualObjectsFieldStatement = IngestionUtils.createFieldsInsert(conn, layerId, layerName, layerDescription, individualObjectsFieldId,
-                    IngestionUtils.CONTEXTUAL_FROM_GRID_CLASSES_FIELD_TYPE, null, null, null, false, true, false, false, false, false, false, true);
+                    IngestionUtils.CONTEXTUAL_FROM_GRID_INDIVIDUAL_OBJECTS_FIELD_TYPE, null, null, null, false, true, false, false, false, false, false, true);
             createIndividualObjectsFieldStatement.execute();
 
         } catch (Exception ex) {

@@ -20,7 +20,7 @@ export PROCESS_DIR="/data/ala/data/layers/process"
 export SHAPE_DIVA_DIR="/data/ala/data/layers/ready/shape_diva"
 export GEOTIFF_DIR="/data/ala/data/layers/ready/geotiff"
 
-export JAVA_CLASSPATH=./layer-ingestion-1.0-SNAPSHOT.jar;./lib/*
+export JAVA_CLASSPATH=./layer-ingestion-1.0-SNAPSHOT.jar:./lib/*
 
 echo "create process directory" \
 && mkdir -p "${PROCESS_DIR}/${LAYER_NAME}" \
@@ -39,4 +39,4 @@ echo "create process directory" \
 && echo "Creating layer and fields table entries for layer" \
 && java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.ingestion.contextual.ContextualFromGridDatabaseLoader "${LAYER_ID}" "${LAYER_NAME}" "${LAYER_DESCRIPTION}" "${SHAPE_DIVA_DIR}/${LAYER_NAME}/polygons.grd" "${DB_USERNAME}" "${DB_PASSWORD}" "${DB_JDBC_URL}" \
 && echo "Load layer into geoserver" \
-java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.ingestion.GeotiffGeoserverLoader "${LAYER_NAME}" "${GEOTIFF_DIR}/${LAYER_NAME}.tif" "${SHAPE_DIVA_DIR}/${LAYER_NAME}/polygons.sld" "${GEOSERVER_BASE_URL}" "${GEOSERVER_USERNAME}" "${GEOSERVER_PASSWORD}""${LAYER_NAME}" "${GEOTIFF_DIR}/${LAYER_NAME}.tif" "${SHAPE_DIVA_DIR}/${LAYER_NAME}/polygons.sld" "${GEOSERVER_BASE_URL}" "${GEOSERVER_USERNAME}" "${GEOSERVER_PASSWORD}"
+java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.ingestion.GeotiffGeoserverLoader "${LAYER_NAME}" "${GEOTIFF_DIR}/${LAYER_NAME}.tif" "${SHAPE_DIVA_DIR}/${LAYER_NAME}/polygons.sld" "${GEOSERVER_BASE_URL}" "${GEOSERVER_USERNAME}" "${GEOSERVER_PASSWORD}"
