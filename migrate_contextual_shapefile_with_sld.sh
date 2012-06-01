@@ -5,7 +5,7 @@
 export SSH_USERNAME=fle13g
 export LAYER_ID=990
 export LAYER_SHORT_NAME=alwc4
-export LAYER_DESCRIPTION=
+export LAYER_DISPLAY_NAME=
 
 export DEV_SERVER=ala-devmaps.vm.csiro.au
 export SHAPE_DIR="/data/ala/data/layers/ready/shape"
@@ -41,7 +41,7 @@ echo "Copy shape files from dev server" \
 && echo "copy sld legend file from dev geoserver to current directory" \
 && wget http://spatial-dev.ala.org.au/geoserver/rest/styles/${LAYER_SHORT_NAME}_style.sld \
 && echo "Load layer in geoserver" \
-&& java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.ingestion.PostgisTableGeoserverLoader "${GEOSERVERBASEURL}" "${GEOSERVERUSERNAME}" "${GEOSERVERPASSWORD}" "${LAYER_ID}" "${LAYER_SHORT_NAME}" "${LAYER_DESCRIPTION}" "./${LAYER_SHORT_NAME}_style.sld" \
+&& java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.ingestion.PostgisTableGeoserverLoader "${GEOSERVERBASEURL}" "${GEOSERVERUSERNAME}" "${GEOSERVERPASSWORD}" "${LAYER_ID}" "${LAYER_SHORT_NAME}" "${LAYER_DISPLAY_NAME}" "./${LAYER_SHORT_NAME}_style.sld" \
 && echo "delete temporary sld file" \
 && echo rm "./${LAYER_SHORT_NAME}_style.sld"
 
