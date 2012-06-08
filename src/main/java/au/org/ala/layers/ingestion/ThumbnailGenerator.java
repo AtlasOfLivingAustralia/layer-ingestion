@@ -29,6 +29,11 @@ import java.util.logging.Logger;
  *   -e: Enabled layers only. Works only with the -f flag. 
  *   -v: Verbose output. 
  *   -o: output path. If none provided, then current directory is assumed 
+ *   -dbJdbcUrl: JDBC url. If not supplied, defaults to "jdbc:postgresql://ala-devmaps-db.vm.csiro.au:5432/layersdb";
+ *   -dbUsername: database username, if not supplied, defaults to "postgres"
+ *   -dbPassword: database password, if not supplied, defaults to "postgres"
+ *   -geoserverLocation: base url for geoserver. If not supplied, defaults to "http://spatial-dev.ala.org.au/geoserver". Must
+ *      not end with a '/';
  * 
  * Example Usage: 
  * 
@@ -45,14 +50,13 @@ import java.util.logging.Logger;
  */
 public class ThumbnailGenerator {
     
-    private static void doFullDump(boolean enabledOnly, File outputDir) {
+    private static void doFullDump(String dbJdbcUrl, String dbUsername, String dbPassword, String geoserverLocation, boolean enabledOnly, File outputDir) {
         try {
             Class.forName("org.postgresql.Driver");
-            String url = "jdbc:postgresql://ala-devmaps-db.vm.csiro.au:5432/layersdb";
             Properties props = new Properties();
-            props.setProperty("user", "postgres");
-            props.setProperty("password", "postgres");
-            Connection conn = DriverManager.getConnection(url, props);
+            props.setProperty("user", dbUsername);
+            props.setProperty("password", dbPassword);
+            Connection conn = DriverManager.getConnection(dbJdbcUrl, props);
             conn.setAutoCommit(false);
             
             String sql = "SELECT name FROM layers";
@@ -63,7 +67,7 @@ public class ThumbnailGenerator {
             Statement st = conn.createStatement();
             ResultSet rs = st.executeQuery(sql);
             while (rs.next()) {
-                generateThumbnail(rs.getString(0), outputDir);
+                generateThumbnail(geoserverLocation, rs.getString(1), outputDir);
             }
 
         } catch (Exception e) {
@@ -72,11 +76,11 @@ public class ThumbnailGenerator {
         }
     }
     
-    private static void generateThumbnail(String layerName, File outputDir) {
+    private static void generateThumbnail(String geoserverLocation, String layerName, File outputDir) {
         try {
             
             System.out.println(" > " + layerName);
-            String thumburl = "http://spatial-dev.ala.org.au/geoserver/wms/reflect?layers=ALA:"+layerName+"&width=200&height=200";
+            String thumburl = geoserverLocation + "/wms/reflect?layers=ALA:"+layerName+"&width=200&height=200";
             
             URL url = new URL(thumburl);
             
@@ -115,6 +119,11 @@ public class ThumbnailGenerator {
         boolean doVerbose = false;
         ArrayList<String> layers = new ArrayList<String>(); 
         
+        String dbJdbcUrl = "jdbc:postgresql://ala-devmaps-db.vm.csiro.au:5432/layersdb";
+        String dbUsername = "postgres";
+        String dbPassword = "postgres";
+        String geoserverLocation = "http://spatial-dev.ala.org.au/geoserver";
+        
         if (args.length == 0) {
             printUsage();
             System.exit(1);
@@ -122,14 +131,26 @@ public class ThumbnailGenerator {
         
         for (int i=0; i<args.length; i++) {
             String s = args[i];
-            if (s.equals("-o")) {
+            if (s.equalsIgnoreCase("-o")) {
                 output_dir = args[i+1];
                 i++;
-            } else if (s.equals("-f")) {
+            } else if (s.equalsIgnoreCase("-dbJdbcUrl")) {
+                dbJdbcUrl = args[i+1];
+                i++;
+            } else if (s.equalsIgnoreCase("-dbUsername")) {
+                dbUsername = args[i+1];
+                i++;
+            } else if (s.equalsIgnoreCase("-dbPassword")) {
+                dbPassword = args[i+1];
+                i++;
+            } else if (s.equalsIgnoreCase("-geoserverLocation")) {
+                geoserverLocation = args[i+1];
+                i++;
+            } else if (s.equalsIgnoreCase("-f")) {
                 doFullSet = true;
-            } else if (s.equals("-e")) {
+            } else if (s.equalsIgnoreCase("-e")) {
                 doEnabledSet = true;
-            } else if (s.equals("-v")) {
+            } else if (s.equalsIgnoreCase("-v")) {
                 doVerbose = true;
             } else {
                 layers.add(s);
@@ -151,12 +172,12 @@ public class ThumbnailGenerator {
             } else {
                 System.out.println("* Generate thumbnails for enabled layers only:");
             }
-            doFullDump(doEnabledSet, outputDir);
+            doFullDump(dbJdbcUrl, dbUsername, dbPassword, geoserverLocation, doEnabledSet, outputDir);
         } else if (!doFullSet && layers.size() > 0) {
             System.out.println("* Generating thumbails for the following layer(s):");
             Iterator<String> it = layers.iterator();
             while (it.hasNext()) {
-                generateThumbnail(it.next(), outputDir);
+                generateThumbnail(geoserverLocation, it.next(), outputDir);
             }
         } else {
             String message = "";
