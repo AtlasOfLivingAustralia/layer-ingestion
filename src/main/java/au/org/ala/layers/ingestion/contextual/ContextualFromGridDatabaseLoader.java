@@ -76,7 +76,7 @@ public class ContextualFromGridDatabaseLoader {
             System.out.println("Creating layers table entry...");
 
             PreparedStatement createLayersStatement = IngestionUtils.createLayersInsertForContextual(conn, layerId, layerDescription, divaGrdFile.getParentFile().getAbsolutePath(), layerName,
-                    displayPath, minLatitude, minLongitude, maxLatitude, maxLongitude);
+                    displayPath, minLatitude, minLongitude, maxLatitude, maxLongitude, "shape_diva/" + layerName);
             createLayersStatement.execute();
 
             // create fields table entry for class objects

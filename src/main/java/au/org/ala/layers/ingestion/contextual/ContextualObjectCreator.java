@@ -14,15 +14,15 @@ public class ContextualObjectCreator {
 
     public static void main(String[] args) {
         if (args.length < 4) {
-            System.out.println("Usage: layerId dbUsername dbPassword dbJdbcUrl" );
+            System.out.println("Usage: layerId dbUsername dbPassword dbJdbcUrl");
             System.exit(1);
         }
-        
+
         int layerId = Integer.parseInt(args[0]);
         String dbUsername = args[1];
         String dbPassword = args[2];
         String dbJdbcUrl = args[3];
-        
+
         try {
             boolean success = create(layerId, dbUsername, dbPassword, dbJdbcUrl);
             if (!success) {
@@ -43,20 +43,21 @@ public class ContextualObjectCreator {
         conn.setAutoCommit(false);
 
         try {
-            //Read field sid, name and description from fields table
+            // Read field sid, name and description from fields table for any
+            // fields that do not have objects created for them.
             System.out.println("Reading field sid, name and description...");
-            PreparedStatement fieldDetailsSelect = conn.prepareStatement("SELECT sid, sname, sdesc FROM fields where id = ?");
+            PreparedStatement fieldDetailsSelect = conn.prepareStatement("SELECT sid, sname, sdesc FROM fields where id = ? AND id NOT in (SELECT DISTINCT fid from objects)");
             fieldDetailsSelect.setString(1, "cl" + Integer.toString(layerId));
             ResultSet rs = fieldDetailsSelect.executeQuery();
-            
+
             if (!rs.next()) {
                 throw new RuntimeException("No fields table entry for layer");
             }
-            
+
             String fieldsSid = rs.getString(1);
             String fieldsSname = rs.getString(2);
             String fieldsSdesc = rs.getString(3);
-            
+
             // insert to objects table
             System.out.println("Creating objects table entries...");
             PreparedStatement createObjectsStatement = createObjectsInsert(conn, layerId, fieldsSid, fieldsSname, fieldsSdesc);
@@ -90,7 +91,7 @@ public class ContextualObjectCreator {
             ex.printStackTrace();
             return false;
         }
-        
+
         return true;
     }
 
@@ -104,8 +105,12 @@ public class ContextualObjectCreator {
     }
 
     private static PreparedStatement createObjectNameGenerationStatement(Connection conn) throws SQLException {
-        PreparedStatement objectNameGenerationStatement = conn.prepareStatement("INSERT INTO obj_names (name)" + "  SELECT lower(objects.name) FROM fields, objects"
-                + "  LEFT OUTER JOIN obj_names ON lower(objects.name)=obj_names.name" + "  WHERE obj_names.name IS NULL" + "  AND fields.namesearch = true" + " AND fields.id = objects.fid"
+        PreparedStatement objectNameGenerationStatement = conn.prepareStatement("INSERT INTO obj_names (name)"
+                + "  SELECT lower(objects.name) FROM fields, objects"
+                + "  LEFT OUTER JOIN obj_names ON lower(objects.name)=obj_names.name"
+                + "  WHERE obj_names.name IS NULL"
+                + "  AND fields.namesearch = true"
+                + " AND fields.id = objects.fid"
                 + " GROUP BY lower(objects.name);" + "  UPDATE objects SET name_id=obj_names.id FROM obj_names WHERE name_id IS NULL AND lower(objects.name)=obj_names.name;");
 
         return objectNameGenerationStatement;

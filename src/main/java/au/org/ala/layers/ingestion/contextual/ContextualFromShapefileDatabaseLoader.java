@@ -146,7 +146,7 @@ public class ContextualFromShapefileDatabaseLoader {
             String displayPath = MessageFormat.format(IngestionUtils.GEOSERVER_QUERY_TEMPLATE, layerName);
             System.out.println("Creating layers table entry...");
             PreparedStatement createLayersStatement = IngestionUtils.createLayersInsertForContextual(conn, layerId, layerDescription, shapeFile.getParentFile().getAbsolutePath(), layerName, displayPath, minLatitude,
-                    minLongitude, maxLatitude, maxLongitude);
+                    minLongitude, maxLatitude, maxLongitude, "shape/" + layerName);
             createLayersStatement.execute();
 
             // insert to fields table

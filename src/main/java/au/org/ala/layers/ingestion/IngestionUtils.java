@@ -29,7 +29,7 @@ public class IngestionUtils {
     public static PreparedStatement createLayersInsertForEnvironmental(Connection conn, int layerId, String description, String path, String name, String displayPath, double minLatitude, double minLongitude,
             double maxLatitude, double maxLongitude, double valueMin, double valueMax, String units) throws SQLException {
         PreparedStatement stLayersInsert = conn
-                .prepareStatement("INSERT INTO layers (id, name, description, type, path, displayPath, minlatitude, minlongitude, maxlatitude, maxlongitude, enabled, displayname, environmentalvaluemin, environmentalvaluemax, environmentalvalueunits, uid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+                .prepareStatement("INSERT INTO layers (id, name, description, type, path, displayPath, minlatitude, minlongitude, maxlatitude, maxlongitude, enabled, displayname, environmentalvaluemin, environmentalvaluemax, environmentalvalueunits, uid, path_orig) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
         stLayersInsert.setInt(1, layerId);
         stLayersInsert.setString(2, name);
         stLayersInsert.setString(3, description);
@@ -46,13 +46,14 @@ public class IngestionUtils {
         stLayersInsert.setDouble(14, valueMax);
         stLayersInsert.setString(15, units);
         stLayersInsert.setString(16, Integer.toString(layerId));
+        stLayersInsert.setString(17, "diva/" + name);
         return stLayersInsert;
     }
     
     public static PreparedStatement createLayersInsertForContextual(Connection conn, int layerId, String description, String path, String name, String displayPath, double minLatitude,
-            double minLongitude, double maxLatitude, double maxLongitude) throws SQLException {
+            double minLongitude, double maxLatitude, double maxLongitude, String path_orig) throws SQLException {
         PreparedStatement stLayersInsert = conn
-                .prepareStatement("INSERT INTO layers (id, name, description, type, path, displayPath, minlatitude, minlongitude, maxlatitude, maxlongitude, enabled, displayname, uid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+                .prepareStatement("INSERT INTO layers (id, name, description, type, path, displayPath, minlatitude, minlongitude, maxlatitude, maxlongitude, enabled, displayname, uid, path_orig) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
         stLayersInsert.setInt(1, layerId);
         stLayersInsert.setString(2, name);
         stLayersInsert.setString(3, description);
@@ -66,6 +67,7 @@ public class IngestionUtils {
         stLayersInsert.setBoolean(11, true);
         stLayersInsert.setString(12, description);
         stLayersInsert.setString(13, Integer.toString(layerId));
+        stLayersInsert.setString(14, path_orig);
         return stLayersInsert;
     }
 
