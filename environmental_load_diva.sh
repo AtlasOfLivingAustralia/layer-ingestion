@@ -6,7 +6,7 @@ export LAYER_ID=111
 export LAYER_SHORT_NAME="ga_bath_rocky" 
 export LAYER_DISPLAY_NAME=
 export UNITS="%" 
-export RAW_DIVA_DIR="/data/ala/data/layers/raw/ga_bath_rocky/hdr.adf"
+export RAW_DIVA_DIR="/data/ala/data/layers/raw/insertdirnamehere"
 
 export DBUSERNAME="postgres"
 export DBPASSWORD="password"
