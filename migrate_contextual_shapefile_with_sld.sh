@@ -45,7 +45,4 @@ echo "Copy shape files from dev server" \
 && echo "delete temporary sld file" \
 && echo rm "./${LAYER_SHORT_NAME}_style.sld"
 
-# Layer thumbnails
-
-
 

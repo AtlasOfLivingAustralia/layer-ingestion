@@ -1,7 +1,8 @@
 #!/bin/bash
 # Loads an environmental layer from raw DIVA data. NOTE: This script only works for diva data in WGS84 datum.
 # Diva data in other datums CANNOT BE LOADED INTO THE SPATIAL PORTAL 
-# NOTE: The following 5 variables need to be modified for each new layer
+# NOTE: The following 5 variables need to be modified for each new layer, it is assumed that the relevant DIVA grid files
+# in RAW_DIVA_DIR have the same name as LAYER_SHORT_NAME (aside from the file extensions) 
 export LAYER_ID=111
 export LAYER_SHORT_NAME="ga_bath_rocky" 
 export LAYER_DISPLAY_NAME=

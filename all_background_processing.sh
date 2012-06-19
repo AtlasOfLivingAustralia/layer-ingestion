@@ -10,7 +10,11 @@ export DB_JDBC_URL="jdbc:postgresql://ala-maps-db.vic.csiro.au:5432/layersdb"
 export DB_USERNAME="postgres"
 export DB_PASSWORD="postgres"
 
-echo "backup diva cache directory" \
+echo "Regenerate layer thumbnails" \
+&& java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.ingestion.ThumbnailGenerator -f -dbJdbcUrl ${DB_JDBC_URL} -dbUsername ${DB_USERNAME} -dbPassword ${DB_PASSWORD} -geoserverLocation ${GEOSERVER_LOCATION} -o ${THUMBNAILS_DIR} \
+&& echo "Change ownership of layer thumbnails" \
+&& chown tomcat:10 ${THUMBNAILS_DIR}/*.jpg \
+&& echo "backup diva cache directory" \
 && tar cvzf "${DIVA_CACHE_DIR}" "${READY_DIR}/diva_cache.tgz" \ 
 && echo "deleting contents of diva_cache directory" \
 && rm ${DIVA_CACHE_DIR}/* \
@@ -28,5 +32,3 @@ echo "backup diva cache directory" \
 && -Xmx20G -cp "${JAVA_CLASSPATH}" org.ala.layers.tabulation.TabulationGenerator "${DB_JDBC_URL}" "${DB_USERNAME}" "${DB_PASSWORD}" 5 "${PATH_TO_RECORDS_CSV}" \
 && -Xmx20G -cp "${JAVA_CLASSPATH}" org.ala.layers.tabulation.TabulationGenerator "${DB_JDBC_URL}" "${DB_USERNAME}" "${DB_PASSWORD}" 6 "${PATH_TO_RECORDS_CSV}" \
 && -Xmx20G -cp "${JAVA_CLASSPATH}" org.ala.layers.tabulation.TabulationGenerator "${DB_JDBC_URL}" "${DB_USERNAME}" "${DB_PASSWORD}" 4
-# TODO layer thumbnails
-

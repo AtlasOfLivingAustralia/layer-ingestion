@@ -41,7 +41,4 @@ echo "Copy shape files from dev server" \
 && echo "Load layer in geoserver" \
 && java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.ingestion.PostgisTableGeoserverLoader "${GEOSERVERBASEURL}" "${GEOSERVERUSERNAME}" "${GEOSERVERPASSWORD}" "${LAYER_ID}" "${LAYER_SHORT_NAME}" "${LAYER_DISPLAY_NAME}"
 
-# Layer thumbnails
-
-
 

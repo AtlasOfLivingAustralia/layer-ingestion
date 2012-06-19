@@ -46,7 +46,5 @@ echo "Copy diva files from dev server" \
 && echo "delete temporary sld file" \
 && rm "./${LAYER_SHORT_NAME}_style.sld"
 
-# Layer thumbnails
-
 
 
