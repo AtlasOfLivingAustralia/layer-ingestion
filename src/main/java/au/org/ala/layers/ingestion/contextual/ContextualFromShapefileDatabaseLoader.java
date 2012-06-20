@@ -27,13 +27,14 @@ public class ContextualFromShapefileDatabaseLoader {
 
     private static final String GID_COLUMN_NAME = "gid";
     private static final String ALA_NAME_COLUMN_NAME = "ala_name";
-    
+
     /**
      * @param args
      */
     public static void main(String[] args) {
-        if (args.length < 12) {
-            System.out.println("Usage: layerId layerName layerDescription fieldsSid fieldsSname fieldsSdesc shapeFile dbUsername dbPassword dbJdbcUrl dbHost dbName [derivedColumnsFile]");
+        if (args.length < 14) {
+            System.out
+                    .println("Usage: layerId layerName layerDescription fieldsSid fieldsSname fieldsSdesc namesearch intersect shapeFile dbUsername dbPassword dbJdbcUrl dbHost dbName [derivedColumnsFile]");
             System.exit(1);
         }
 
@@ -43,20 +44,23 @@ public class ContextualFromShapefileDatabaseLoader {
         String fieldsSid = args[3];
         String fieldsSname = args[4];
         String fieldsSdesc = args[5];
-        File shapeFile = new File(args[6]);
-        String dbUsername = args[7];
-        String dbPassword = args[8];
-        String dbJdbcUrl = args[9];
-        String dbHost = args[10];
-        String dbName = args[11];
+        boolean namesearch = Boolean.parseBoolean(args[6]);
+        boolean intersect = Boolean.parseBoolean(args[7]);
+        File shapeFile = new File(args[8]);
+        String dbUsername = args[9];
+        String dbPassword = args[10];
+        String dbJdbcUrl = args[11];
+        String dbHost = args[12];
+        String dbName = args[13];
 
         File derivedColumnsFile = null;
-        if (args.length >= 13) {
-            derivedColumnsFile = new File(args[12]);
+        if (args.length >= 15) {
+            derivedColumnsFile = new File(args[14]);
         }
 
         try {
-            boolean success = create(layerId, layerName, layerDescription, fieldsSid, fieldsSname, fieldsSdesc, shapeFile, dbUsername, dbPassword, dbJdbcUrl, dbHost, dbName, derivedColumnsFile);
+            boolean success = create(layerId, layerName, layerDescription, fieldsSid, fieldsSname, fieldsSdesc, namesearch, intersect, shapeFile, dbUsername, dbPassword, dbJdbcUrl, dbHost,
+                    dbName, derivedColumnsFile);
             if (success) {
                 System.exit(0);
             } else {
@@ -68,8 +72,8 @@ public class ContextualFromShapefileDatabaseLoader {
         }
     }
 
-    public static boolean create(int layerId, String layerName, String layerDescription, String fieldsSid, String fieldsSname, String fieldsSdesc, File shapeFile, String dbUsername,
-            String dbPassword, String dbJdbcUrl, String dbHost, String dbName, File derivedColumnsFile) throws Exception {
+    public static boolean create(int layerId, String layerName, String layerDescription, String fieldsSid, String fieldsSname, String fieldsSdesc, boolean namesearch, boolean intersect,
+            File shapeFile, String dbUsername, String dbPassword, String dbJdbcUrl, String dbHost, String dbName, File derivedColumnsFile) throws Exception {
 
         boolean reExportShapeFile = false;
 
@@ -145,14 +149,15 @@ public class ContextualFromShapefileDatabaseLoader {
             // insert to layers table
             String displayPath = MessageFormat.format(IngestionUtils.GEOSERVER_QUERY_TEMPLATE, layerName);
             System.out.println("Creating layers table entry...");
-            PreparedStatement createLayersStatement = IngestionUtils.createLayersInsertForContextual(conn, layerId, layerDescription, shapeFile.getParentFile().getAbsolutePath(), layerName, displayPath, minLatitude,
-                    minLongitude, maxLatitude, maxLongitude, "shape/" + layerName);
+            PreparedStatement createLayersStatement = IngestionUtils.createLayersInsertForContextual(conn, layerId, layerDescription, shapeFile.getParentFile().getAbsolutePath(), layerName,
+                    displayPath, minLatitude, minLongitude, maxLatitude, maxLongitude, "shape/" + layerName);
             createLayersStatement.execute();
 
             // insert to fields table
             System.out.println("Creating fields table entry...");
             String fieldId = IngestionUtils.CONTEXTUAL_FIELD_PREFIX + Integer.toString(layerId);
-            PreparedStatement createFieldsStatement = IngestionUtils.createFieldsInsert(conn, layerId, layerDescription, layerDescription, fieldId, IngestionUtils.CONTEXTUAL_REGULAR_FIELD_TYPE, fieldsSid, fieldsSname, fieldsSdesc, true, true, true, true, false, false, true, true);
+            PreparedStatement createFieldsStatement = IngestionUtils.createFieldsInsert(conn, layerId, layerDescription, layerDescription, fieldId, IngestionUtils.CONTEXTUAL_REGULAR_FIELD_TYPE,
+                    fieldsSid, fieldsSname, fieldsSdesc, true, true, namesearch, true, intersect, false, true, true);
             createFieldsStatement.execute();
 
             conn.commit();

@@ -8,6 +8,8 @@ export LAYER_DISPLAY_NAME="Marine Ecoregions of the World"
 export FIELDSSID=""
 export FIELDSSNAME=""
 export FIELDSSDESCRIPTION=""
+export NAME_SEARCH="true"
+export INTERSECT="false"
 
 export DBUSERNAME="postgres"
 export DBPASSWORD="postgres"
@@ -26,7 +28,7 @@ export JAVA_CLASSPATH="./layer-ingestion-1.0-SNAPSHOT.jar:./lib/*"
 echo "Reprojecting shapefile to WGS 84" \
 && ogr2ogr -t_srs EPSG:4326  "${REPROJECTEDSHAPEFILE}" "${SHAPEFILE}" \
 && echo "Creating layer and fields table entries for layer, converting shapefile to database table" \
-&& java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.ingestion.contextual.ContextualFromShapefileDatabaseLoader "${LAYERID}" "${LAYER_SHORT_NAME}" "${LAYER_DISPLAY_NAME}" "${FIELDSSID}" "${FIELDSSNAME}" "${FIELDSSDESCRIPTION}" "${REPROJECTEDSHAPEFILE}" "${DBUSERNAME}" "${DBPASSWORD}" "${DBJDBCURL}" "${DBHOST}" "${DBNAME}" \
+&& java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.ingestion.contextual.ContextualFromShapefileDatabaseLoader "${LAYERID}" "${LAYER_SHORT_NAME}" "${LAYER_DISPLAY_NAME}" "${FIELDSSID}" "${FIELDSSNAME}" "${FIELDSSDESCRIPTION}" "${NAME_SEARCH}" "${INTERSECT}" "${REPROJECTEDSHAPEFILE}" "${DBUSERNAME}" "${DBPASSWORD}" "${DBJDBCURL}" "${DBHOST}" "${DBNAME}" \
 && echo "Create objects from layer" \
 && java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.ingestion.contextual.ContextualObjectCreator "${LAYERID}" "${DBUSERNAME}" "${DBPASSWORD}" "${DBJDBCURL}" \
 && echo "Load layer into geoserver" \
