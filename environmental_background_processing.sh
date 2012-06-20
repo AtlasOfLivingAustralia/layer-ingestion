@@ -24,4 +24,4 @@ echo "Regenerate layer thumbnails" \
 && echo "Preparing environmental layers for analysis" \
 && java -Xmx20G -DANALYSIS_RESOLUTIONS=0.5,0.01,0.0025 -cp "${JAVA_CLASSPATH}" org.ala.layers.util.AnalysisLayerUtil auto grids \
 && echo "Calculating environmental layer distance values" \
-&& java -Xmx20G -cp "${JAVA_CLASSPATH}" org.ala.spatial.analysis.index.LayerDistanceIndex "${DIVA_DIR}" "${DIVA_CACHE_DIR}"
+&& java -Xmx20G -cp "${JAVA_CLASSPATH}" org.ala.spatial.analysis.index.LayerDistanceIndex 4
