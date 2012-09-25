@@ -46,23 +46,30 @@ public class ContextualObjectCreator {
             // Read field sid, name and description from fields table for any
             // fields that do not have objects created for them.
             System.out.println("Reading field sid, name and description...");
-            PreparedStatement fieldDetailsSelect = conn.prepareStatement("SELECT sid, sname, sdesc, namesearch FROM fields where id = ? AND id NOT in (SELECT DISTINCT fid from objects)");
-            fieldDetailsSelect.setString(1, "cl" + Integer.toString(layerId));
+            PreparedStatement fieldDetailsSelect = conn.prepareStatement("SELECT id, sid, sname, sdesc, namesearch FROM fields where spid = ? AND id NOT in (SELECT DISTINCT fid from objects)");
+            fieldDetailsSelect.setString(1, Integer.toString(layerId));
             ResultSet rs = fieldDetailsSelect.executeQuery();
 
-            if (!rs.next()) {
-                throw new RuntimeException("No fields table entry for layer");
+            int numberFieldsTableEntriesProcessed = 0;
+
+            while (rs.next()) {
+                String fieldId = rs.getString(1);
+                String fieldsSid = rs.getString(2);
+                String fieldsSname = rs.getString(3);
+                String fieldsSdesc = rs.getString(4);
+                boolean namesearch = rs.getBoolean(5);
+
+                // insert to objects table
+                System.out.println("Creating objects table entries...");
+                PreparedStatement createObjectsStatement = createObjectsInsert(conn, layerId, fieldId, fieldsSid, fieldsSname, fieldsSdesc, namesearch);
+                createObjectsStatement.execute();
+                
+                numberFieldsTableEntriesProcessed++;
             }
 
-            String fieldsSid = rs.getString(1);
-            String fieldsSname = rs.getString(2);
-            String fieldsSdesc = rs.getString(3);
-            boolean namesearch = rs.getBoolean(4);
-
-            // insert to objects table
-            System.out.println("Creating objects table entries...");
-            PreparedStatement createObjectsStatement = createObjectsInsert(conn, layerId, fieldsSid, fieldsSname, fieldsSdesc, namesearch);
-            createObjectsStatement.execute();
+            if (numberFieldsTableEntriesProcessed == 0) {
+                throw new RuntimeException("No fields table entry for layer, or objects have already been created for all fields table entries for layer.");
+            }
 
             // generate object names
             System.out.println("Generating object names...");
@@ -96,22 +103,18 @@ public class ContextualObjectCreator {
         return true;
     }
 
-    private static PreparedStatement createObjectsInsert(Connection conn, int layerId, String fieldsSid, String fieldsSname, String fieldsSdesc, boolean namesearch) throws SQLException {
+    private static PreparedStatement createObjectsInsert(Connection conn, int layerId, String fieldId, String fieldsSid, String fieldsSname, String fieldsSdesc, boolean namesearch) throws SQLException {
         // Unfortunately table and column names can't be substituted with
         // PreparedStatements, so we have to hardcode them
         PreparedStatement stLayersInsert = conn.prepareStatement(MessageFormat.format("INSERT INTO objects (pid, id, name, \"desc\", fid, the_geom, namesearch)"
                 + " SELECT nextval(''objects_id_seq''::regclass), {0}, MAX({1}), MAX({2}), ''{3}'', ST_UNION(the_geom), {4} FROM \"{5}\" GROUP BY {6}", fieldsSid, fieldsSname,
-                fieldsSdesc == null ? "NULL" : fieldsSdesc, "cl" + Integer.toString(layerId), Boolean.toString(namesearch), Integer.toString(layerId), fieldsSid));
+                fieldsSdesc == null ? "NULL" : fieldsSdesc, fieldId, Boolean.toString(namesearch), Integer.toString(layerId), fieldsSid));
         return stLayersInsert;
     }
 
     private static PreparedStatement createObjectNameGenerationStatement(Connection conn) throws SQLException {
-        PreparedStatement objectNameGenerationStatement = conn.prepareStatement("INSERT INTO obj_names (name)"
-                + "  SELECT lower(objects.name) FROM fields, objects"
-                + "  LEFT OUTER JOIN obj_names ON lower(objects.name)=obj_names.name"
-                + "  WHERE obj_names.name IS NULL"
-                + "  AND fields.namesearch = true"
-                + " AND fields.id = objects.fid"
+        PreparedStatement objectNameGenerationStatement = conn.prepareStatement("INSERT INTO obj_names (name)" + "  SELECT lower(objects.name) FROM fields, objects"
+                + "  LEFT OUTER JOIN obj_names ON lower(objects.name)=obj_names.name" + "  WHERE obj_names.name IS NULL" + "  AND fields.namesearch = true" + " AND fields.id = objects.fid"
                 + " GROUP BY lower(objects.name);" + "  UPDATE objects SET name_id=obj_names.id FROM obj_names WHERE name_id IS NULL AND lower(objects.name)=obj_names.name;");
 
         return objectNameGenerationStatement;
