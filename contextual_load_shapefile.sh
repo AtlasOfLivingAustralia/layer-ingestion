@@ -1,6 +1,6 @@
 #!/bin/bash
 # Loads a contextual layer using from a shape file (.shp)
-# NOTE: The following 7 variables need to be modified for each new layer
+# NOTE: The following 9 variables need to be modified for each new layer
 export SHAPEFILE="/data/ala/data/layers/raw/meow_ecos/meow_ecos.shp"
 export LAYERID="988"
 export LAYER_SHORT_NAME="meow_ecos"
