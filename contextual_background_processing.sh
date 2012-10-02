@@ -1,7 +1,7 @@
 #!/bin/bash
 # This script performs background processing on contextual layers.
 # The variable below needs to be edited to point to the latest longitude, latitude and lsid dump file:
-export PATH_TO_RECORDS_CSV="/data/ala/data/layers/process/density/_records.csv"
+export PATH_TO_RECORDS_CSV="/data/ala/data/layers/process/density/built_??????/_records.csv"
 
 export JAVA_CLASSPATH="./layer-ingestion-1.0-SNAPSHOT.jar:./lib/*"
 
