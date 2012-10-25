@@ -79,13 +79,13 @@ public class ExpertDistributionsDataImport {
             // Get ID to use for layer
             try {
                 Statement st = conn.createStatement();
-                ResultSet rs = st.executeQuery(String.format("SELECT * from distributiondata where spCode = %s", spCode));
+                ResultSet rs = st.executeQuery(String.format("SELECT * from distributiondata where spcode = %s", spCode));
                 if (rs.next()) {
                     // update existing row with new values
                     PreparedStatement stUpdate = conn.prepareStatement("UPDATE distributiondata SET scientific = ?, authority_ = ?, common_nam = ?, family = ?,"
                             + " genus_name = ?, specific_n = ?, min_depth = ?, max_depth = ?, pelagic_fl = ?, " + " lsid = ?, type = ?, estuarine_fl = ?, coastal_fl = ?, desmersal_fl = ?,"
                             + " group_name = ?, genus_exemplar = ?, family_exemplar = ?, caab_species_number = ?, caab_species_url = ?, caab_family_number = ?,"
-                            + " caab_family_url = ?, metadata_uuid = ?, metadata_u = ?, family_lsid = ?, genus_lsid = ? WHERE spCode = ?;");
+                            + " caab_family_url = ?, metadata_uuid = ?, metadata_u = ?, family_lsid = ?, genus_lsid = ? WHERE spcode = ?;");
                     stUpdate.setString(1, scientificName);
                     stUpdate.setString(2, authorityFull);
                     stUpdate.setString(3, commonName);
@@ -210,9 +210,9 @@ public class ExpertDistributionsDataImport {
         if (jsonArr.size() > 0) {
             JSONObject jsonObj = (JSONObject) jsonArr.get(0);
 
-            lsid = (String) jsonObj.get("identifier");
+            lsid = (String) jsonObj.get("acceptedIdentifier");
         }
-
+        
         return lsid;
     }
 
