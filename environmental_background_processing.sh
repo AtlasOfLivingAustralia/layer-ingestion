@@ -16,7 +16,7 @@ echo "Regenerate layer thumbnails" \
 && echo "Change ownership of layer thumbnails" \
 && chown tomcat:10 ${THUMBNAILS_DIR}/*.jpg \
 && echo "backup diva cache directory" \
-&& tar cvzf "${DIVA_CACHE_DIR}" "${READY_DIR}/diva_cache.tgz" \ 
+&& tar cvzf "${READY_DIR}/diva_cache.tgz" "${DIVA_CACHE_DIR}" \
 && echo "deleting contents of diva_cache directory" \
 && rm ${DIVA_CACHE_DIR}/* \
 && echo "running GridCacheBuilder" \
