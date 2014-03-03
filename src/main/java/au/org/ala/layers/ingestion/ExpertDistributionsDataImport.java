@@ -1,6 +1,7 @@
 package au.org.ala.layers.ingestion;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.net.URI;
 import java.net.URL;
 import java.sql.Connection;
@@ -14,6 +15,7 @@ import java.util.Properties;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -37,7 +39,79 @@ public class ExpertDistributionsDataImport {
         ((org.postgresql.PGConnection) conn).addDataType("geometry", org.postgis.PGgeometry.class);
         ((org.postgresql.PGConnection) conn).addDataType("box3d", org.postgis.PGbox3d.class);
 
-        String fileName = args[0];
+        if(args.length==1){
+            load(args[0], conn);
+        } else if(args.length>1){
+            String file = args[0];
+            //rematch and write to the file
+            if(args[1].equals("-rematch")){
+                rematch(file,conn);
+            }   else if(args[1].equals("-load")){
+                load(file, conn);
+            }
+        }
+    }
+
+    /**
+     * A rematch option to allow for a rematch of the species to occur without reloading the distribution tables.
+     *
+     * It will produce a SQL script that can be used to update on either server.
+     *
+     * @param filename The absolute filename for the SQL file to produce
+     * @param conn
+     * @throws Exception
+     */
+    private static void rematch(String filename, Connection conn) throws Exception{
+        String select="SELECT spcode, scientific,family,genus_name,lsid,family_lsid,genus_lsid from distributions";
+        FileOutputStream fos=FileUtils.openOutputStream(new File(filename));
+        Statement st = conn.createStatement();
+        ResultSet rs = st.executeQuery(select);
+        String updateStatement ="UPDATE distributions set lsid=%s, family_lsid=%s, genus_lsid=%s where spcode=%s;\n";
+        int count =0,rematched=0;
+        try{
+        while (rs.next()){
+            String spcode = rs.getString(1);
+            String scientificName =rs.getString(2);
+            String family = rs.getString(3);
+            String genusName = rs.getString(4);
+            String currentLsid = rs.getString(5);
+            String currentFamilyLsid= rs.getString(6);
+            String currentGenusLsid=rs.getString(7);
+            String lsid = lookupSpeciesOrFamilyLsid(scientificName);
+            String familyLsid = family != null && family.length()>0? lookupSpeciesOrFamilyLsid(family):null;
+            String genusLsid = genusName != null && genusName.length()>0? lookupGenusLsid(genusName):null;
+            count++;
+            if(!StringUtils.equals(lsid, currentLsid)){
+
+                if(lsid == null){
+                    System.out.println("Issue with " +spcode +" for scientific name " + scientificName);
+                } else {
+                    //System.out.println("LSIDs are different: " + lsid + " " + currentLsid +" sci : " + scientificName);
+                    //String.format("SELECT * from distributiondata where spcode = %s", spCode)
+                    String line = String.format(updateStatement, toParamString(lsid), toParamString(familyLsid), toParamString(genusLsid),spcode);
+                    fos.write(line.getBytes());
+
+                    rematched++;
+                }
+            }
+        }
+        } catch(Exception e){
+            throw e;
+        } finally{
+            fos.flush();
+            fos.close();
+            rs.close();
+        }
+        System.out.println("Rematched " + rematched + " out of " + count);
+    }
+    private static String toParamString(String value){
+        return value == null?"null":"'"+value+"'";
+    }
+
+    private static void load(String filename, Connection conn) throws Exception{
+
+
+        String fileName = filename;
 
         String fileContent = FileUtils.readFileToString(new File(fileName));
 
@@ -199,7 +273,7 @@ public class ExpertDistributionsDataImport {
         HttpGet get = new HttpGet(uri.toURL().toString());
         HttpResponse response = client.execute(get);
         if (response.getStatusLine().getStatusCode() != 200) {
-            throw new IllegalStateException("Fetching of species or family LSID failed");
+            throw new IllegalStateException("Fetching of species or family LSID failed " +  response.getStatusLine().getReasonPhrase() + " " + id);
         }
 
         HttpEntity entity = response.getEntity();
