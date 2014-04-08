@@ -65,6 +65,7 @@ public class ExpertDistributionsDataImport {
         String select="SELECT spcode, scientific,family,genus_name,lsid,family_lsid,genus_lsid from distributions";
         FileOutputStream fos=FileUtils.openOutputStream(new File(filename));
         Statement st = conn.createStatement();
+        System.out.println("Starting to rematch...");
         ResultSet rs = st.executeQuery(select);
         String updateStatement ="UPDATE distributions set lsid=%s, family_lsid=%s, genus_lsid=%s where spcode=%s;\n";
         int count =0,rematched=0;
@@ -81,10 +82,10 @@ public class ExpertDistributionsDataImport {
             String familyLsid = family != null && family.length()>0? lookupSpeciesOrFamilyLsid(family):null;
             String genusLsid = genusName != null && genusName.length()>0? lookupGenusLsid(genusName):null;
             count++;
-            if(!StringUtils.equals(lsid, currentLsid)){
+            if(!StringUtils.equals(lsid, currentLsid) || !StringUtils.equals(familyLsid, currentFamilyLsid) || !StringUtils.equals(genusLsid, currentGenusLsid)){
 
                 if(lsid == null){
-                    System.out.println("Issue with " +spcode +" for scientific name " + scientificName);
+                    System.out.println("Issue with " +spcode +" for scientific name " + scientificName + " current lsid: " + currentLsid);
                 } else {
                     //System.out.println("LSIDs are different: " + lsid + " " + currentLsid +" sci : " + scientificName);
                     //String.format("SELECT * from distributiondata where spcode = %s", spCode)
@@ -93,6 +94,8 @@ public class ExpertDistributionsDataImport {
 
                     rematched++;
                 }
+            } else {
+                //System.out.println("Matched " + spcode + " " + scientificName + " to " + lsid);
             }
         }
         } catch(Exception e){
