@@ -1,24 +1,17 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+        <parent>
+            <groupId>au.org.ala</groupId>
+            <artifactId>ala-parent-pom</artifactId>
+            <version>1.0</version>
+        </parent>
+
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>au.org.ala</groupId>
 	<artifactId>layer-ingestion</artifactId>
 	<version>1.0-SNAPSHOT</version>
 	<name>ALA Spatial Layer Ingestion Tools</name>
-
-	<repositories>
-		<!-- ALA repository -->
-		<repository>
-			<id>ala-repository</id>
-			<name>ala-repository</name>
-			<url>http://maven.ala.org.au/repository</url>
-		</repository>
-		<repository>
-			<id>java.net2</id>
-			<name>Repository hosting the jee6 artifacts</name>
-			<url>http://download.java.net/maven/2</url>
-		</repository>
-	</repositories>
 
 	<build>
 		<plugins>
@@ -116,17 +109,4 @@
 			<version>1.3.3</version>
 		</dependency>
 	</dependencies>
-
-        <distributionManagement>
-                <repository>
-                        <id>ala-repo</id>
-                        <name>Internal Releases</name>
-                        <url>http://ala-wonder.it.csiro.au/nexus/content/repositories/releases/</url>
-                </repository>
-                <snapshotRepository>
-                        <id>ala-repo</id>
-                        <name>Internal Releases</name>
-                        <url>http://ala-wonder.it.csiro.au/nexus/content/repositories/snapshots/</url>
-                </snapshotRepository>
-        </distributionManagement>
 </project>
