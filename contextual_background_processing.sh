@@ -17,16 +17,16 @@ echo "Regenerate layer thumbnails" \
 && echo "Change ownership of layer thumbnails" \
 && chown tomcat:10 ${THUMBNAILS_DIR}/*.jpg \
 && echo "Preparing contextual layers for analysis" \
-&& java -Xmx20G -DANALYSIS_RESOLUTIONS=0.5,0.01 -cp "${JAVA_CLASSPATH}" org.ala.layers.util.AnalysisLayerUtil auto shapes \
+&& java -Xmx20G -DANALYSIS_RESOLUTIONS=0.5,0.01 -cp "${JAVA_CLASSPATH}" au.org.ala.layers.util.AnalysisLayerUtil auto shapes \
 && echo "Generating tabulation for contextual layers" \
 && echo "tabulation step 1" \
-&& java -Xmx20G -cp "${JAVA_CLASSPATH}" org.ala.layers.tabulation.TabulationGenerator 4 "${DB_JDBC_URL}" "${DB_USERNAME}" "${DB_PASSWORD}" 1 \
+&& java -Xmx20G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.tabulation.TabulationGenerator 4 "${DB_JDBC_URL}" "${DB_USERNAME}" "${DB_PASSWORD}" 1 \
 && echo "tabulation step 3" \
-&& java -Xmx20G -cp "${JAVA_CLASSPATH}" org.ala.layers.tabulation.TabulationGenerator 4 "${DB_JDBC_URL}" "${DB_USERNAME}" "${DB_PASSWORD}" 3 \
+&& java -Xmx20G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.tabulation.TabulationGenerator 4 "${DB_JDBC_URL}" "${DB_USERNAME}" "${DB_PASSWORD}" 3 \
 && echo "tabulation step 5" \
-&& java -Xmx20G -cp "${JAVA_CLASSPATH}" org.ala.layers.tabulation.TabulationGenerator 4 "${DB_JDBC_URL}" "${DB_USERNAME}" "${DB_PASSWORD}" 5 "${PATH_TO_RECORDS_CSV}" \
+&& java -Xmx20G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.tabulation.TabulationGenerator 4 "${DB_JDBC_URL}" "${DB_USERNAME}" "${DB_PASSWORD}" 5 "${PATH_TO_RECORDS_CSV}" \
 && echo "tabulation step 6" \
-&& java -Xmx20G -cp "${JAVA_CLASSPATH}" org.ala.layers.tabulation.TabulationGenerator 4 "${DB_JDBC_URL}" "${DB_USERNAME}" "${DB_PASSWORD}" 6 "${PATH_TO_RECORDS_CSV}" \
+&& java -Xmx20G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.tabulation.TabulationGenerator 4 "${DB_JDBC_URL}" "${DB_USERNAME}" "${DB_PASSWORD}" 6 "${PATH_TO_RECORDS_CSV}" \
 && echo "tabulation step 4" \
-&& java -Xmx20G -cp "${JAVA_CLASSPATH}" org.ala.layers.tabulation.TabulationGenerator 4 "${DB_JDBC_URL}" "${DB_USERNAME}" "${DB_PASSWORD}" 4
+&& java -Xmx20G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.tabulation.TabulationGenerator 4 "${DB_JDBC_URL}" "${DB_USERNAME}" "${DB_PASSWORD}" 4
 

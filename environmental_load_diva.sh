@@ -27,11 +27,11 @@ export JAVA_CLASSPATH="./layer-ingestion-1.0-SNAPSHOT.jar:./lib/*"
 echo "copy diva files from 'raw' directory to diva directory" \
 && cp "${RAW_DIVA_DIR}/${LAYER_SHORT_NAME}*" "${DIVA_DIR}" \
 && echo "generate sld legend file" \
-&& java -Xmx10G -cp "${JAVA_CLASSPATH}" org.ala.layers.legend.GridLegend "${DIVA_DIR}/${LAYER_SHORT_NAME}" "${LEGEND_DIR}/${LAYER_SHORT_NAME}" \
+&& java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.legend.GridLegend "${DIVA_DIR}/${LAYER_SHORT_NAME}" "${LEGEND_DIR}/${LAYER_SHORT_NAME}" \
 && echo "create process directory" \
 && mkdir -p "${PROCESS_DIR}/${LAYER_SHORT_NAME}" \
 && echo "covert diva to bil" \
-&& java -Xmx10G -cp "${JAVA_CLASSPATH}" org.ala.layers.util.Diva2bil "${DIVA_DIR}/${LAYER_SHORT_NAME}" "${PROCESS_DIR}/${LAYER_SHORT_NAME}/${LAYER_SHORT_NAME}" \
+&& java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.util.Diva2bil "${DIVA_DIR}/${LAYER_SHORT_NAME}" "${PROCESS_DIR}/${LAYER_SHORT_NAME}/${LAYER_SHORT_NAME}" \
 && echo "convert bil to geotiff" \
 && gdal_translate -of GTiff -a_srs EPSG:4326 "${PROCESS_DIR}/${LAYER_SHORT_NAME}/${LAYER_SHORT_NAME}.bil" "${GEOTIFF_DIR}/${LAYER_SHORT_NAME}.tif" \
 && echo "Creating layer and fields table entries for layer" \

@@ -25,11 +25,11 @@ export JAVA_CLASSPATH="./layer-ingestion-1.0-SNAPSHOT.jar:./lib/*"
 echo "create process directory" 
 && mkdir -p "${PROCESS_DIR}/${LAYER_SHORT_NAME}" \
 && echo "convert adf to bil, reprojecting to WGS 84" \
-&& gdalwarp -of EHdr -ot Float32 -t_srs EPSG:4326 "${NETCDF_FILE}" "${PROCESS_DIR}/${LAYER_SHORT_NAME}/${LAYER_SHORT_NAME}.bil" \
+&& gdalwarp -r cubicspline -of EHdr -ot Float32 -t_srs EPSG:4326 "${NETCDF_FILE}" "${PROCESS_DIR}/${LAYER_SHORT_NAME}/${LAYER_SHORT_NAME}.bil" \
 && echo "convert bil to diva" \
-&& java -Xmx10G -cp "${JAVA_CLASSPATH}" org.ala.layers.util.Bil2diva "${PROCESS_DIR}/${LAYER_SHORT_NAME}/${LAYER_SHORT_NAME}" "${DIVA_DIR}/${LAYER_SHORT_NAME}" "${UNITS}" \
+&& java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.util.Bil2diva "${PROCESS_DIR}/${LAYER_SHORT_NAME}/${LAYER_SHORT_NAME}" "${DIVA_DIR}/${LAYER_SHORT_NAME}" "${UNITS}" \
 && echo "generate sld legend file" \
-&& java -Xmx10G -cp "${JAVA_CLASSPATH}" org.ala.layers.legend.GridLegend "${DIVA_DIR}/${LAYER_SHORT_NAME}" "${LEGEND_DIR}/${LAYER_SHORT_NAME}" \
+&& java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.legend.GridLegend "${DIVA_DIR}/${LAYER_SHORT_NAME}" "${LEGEND_DIR}/${LAYER_SHORT_NAME}" \
 && echo "convert bil to geotiff" \
 && gdal_translate -of GTiff "${PROCESS_DIR}/${LAYER_SHORT_NAME}/${LAYER_SHORT_NAME}.bil" "${GEOTIFF_DIR}/${LAYER_SHORT_NAME}.tif" \
 && echo "Creating layer and fields table entries for layer" \

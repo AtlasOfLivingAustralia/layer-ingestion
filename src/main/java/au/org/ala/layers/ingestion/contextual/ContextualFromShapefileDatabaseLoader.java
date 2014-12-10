@@ -1,27 +1,18 @@
 package au.org.ala.layers.ingestion.contextual;
 
-import java.io.File;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
+import au.org.ala.layers.ingestion.IngestionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
-import au.org.ala.layers.ingestion.IngestionUtils;
+import java.io.File;
+import java.sql.*;
+import java.text.MessageFormat;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ContextualFromShapefileDatabaseLoader {
 
@@ -73,7 +64,7 @@ public class ContextualFromShapefileDatabaseLoader {
     }
 
     public static boolean create(int layerId, String layerName, String layerDescription, String fieldsSid, String fieldsSname, String fieldsSdesc, boolean namesearch, boolean intersect,
-            File shapeFile, String dbUsername, String dbPassword, String dbJdbcUrl, String dbHost, String dbName, File derivedColumnsFile) throws Exception {
+                                 File shapeFile, String dbUsername, String dbPassword, String dbJdbcUrl, String dbHost, String dbName, File derivedColumnsFile) throws Exception {
 
         boolean reExportShapeFile = false;
 
@@ -189,7 +180,7 @@ public class ContextualFromShapefileDatabaseLoader {
 
     /**
      * use ogrinfo to determine layer extents
-     * 
+     *
      * @param shapeFile
      * @param layerName
      * @return
@@ -203,7 +194,7 @@ public class ContextualFromShapefileDatabaseLoader {
         double maxLatitude;
         double minLongitude;
         double maxLongitude;
-        Process procOgrinfo = Runtime.getRuntime().exec(new String[] { "ogrinfo", "-so", shapeFile.getAbsolutePath(), layerName });
+        Process procOgrinfo = Runtime.getRuntime().exec(new String[]{"ogrinfo", "-so", shapeFile.getAbsolutePath(), layerName});
 
         // read output straight away otherwise process may hang
         String ogrinfoOutput = IOUtils.toString(procOgrinfo.getInputStream());
@@ -253,7 +244,7 @@ public class ContextualFromShapefileDatabaseLoader {
         // use shp2pgsql to convert shape file into sql for insertion in the
         // database
         System.out.println("Converting shape file for insertion in database...");
-        Process procShp2Pgsql = Runtime.getRuntime().exec(new String[] { "shp2pgsql", "-I", "-s", "4326", shapeFile.getAbsolutePath(), Integer.toString(layerId) });
+        Process procShp2Pgsql = Runtime.getRuntime().exec(new String[]{"shp2pgsql", "-I", "-s", "4326", shapeFile.getAbsolutePath(), Integer.toString(layerId)});
 
         String shp2pgsqlOutput = IOUtils.toString(procShp2Pgsql.getInputStream());
 
@@ -278,7 +269,7 @@ public class ContextualFromShapefileDatabaseLoader {
 
     /**
      * Used to write a modified postgis table back to a shapefile.
-     * 
+     *
      * @param shapeFile
      * @param layerId
      * @param dbHost
@@ -290,7 +281,7 @@ public class ContextualFromShapefileDatabaseLoader {
     private static void reExportShapeFile(File shapeFile, int layerId, String dbHost, String dbName, String dbUsername, String dbPassword) throws Exception {
         System.out.println("Using pgsql2shp to re-export shapefile that was modified using postgis");
         Process procPgsql2shp = Runtime.getRuntime().exec(
-                new String[] { "pgsql2shp", "-f", shapeFile.getAbsolutePath(), "-h", dbHost, "-u", dbUsername, "-P", dbPassword, dbName, Integer.toString(layerId) });
+                new String[]{"pgsql2shp", "-f", shapeFile.getAbsolutePath(), "-h", dbHost, "-u", dbUsername, "-P", dbPassword, dbName, Integer.toString(layerId)});
 
         int pgsql2shpReturnVal = procPgsql2shp.waitFor();
 

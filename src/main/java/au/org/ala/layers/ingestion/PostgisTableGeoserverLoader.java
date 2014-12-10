@@ -1,7 +1,5 @@
 package au.org.ala.layers.ingestion;
 
-import java.io.File;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -12,13 +10,14 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 
+import java.io.File;
+
 /**
  * Used to create a layer in geoserver from a postgis table, in turn created
  * from a shapefile. This tool is used for all contextual layers aside from
  * those processed using the GridClassBuilder.
- * 
+ *
  * @author ChrisF
- * 
  */
 public class PostgisTableGeoserverLoader {
 

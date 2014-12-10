@@ -1,14 +1,10 @@
 package au.org.ala.layers.ingestion.contextual;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import au.org.ala.layers.stats.ObjectsStatsGenerator;
+
+import java.sql.*;
 import java.text.MessageFormat;
 import java.util.Properties;
-
-import org.ala.layers.stats.ObjectsStatsGenerator;
 
 public class ContextualObjectCreator {
 
@@ -63,7 +59,7 @@ public class ContextualObjectCreator {
                 System.out.println("Creating objects table entries...");
                 PreparedStatement createObjectsStatement = createObjectsInsert(conn, layerId, fieldId, fieldsSid, fieldsSname, fieldsSdesc, namesearch);
                 createObjectsStatement.execute();
-                
+
                 numberFieldsTableEntriesProcessed++;
             }
 
@@ -94,7 +90,7 @@ public class ContextualObjectCreator {
         // bboxes and areas
         System.out.println("Running ObjectStatsGenerator tool...");
         try {
-            ObjectsStatsGenerator.main(new String[] { "10", dbJdbcUrl, dbUsername, dbPassword });
+            ObjectsStatsGenerator.main(new String[]{"10", dbJdbcUrl, dbUsername, dbPassword});
         } catch (Exception ex) {
             ex.printStackTrace();
             return false;
@@ -107,7 +103,7 @@ public class ContextualObjectCreator {
         // Unfortunately table and column names can't be substituted with
         // PreparedStatements, so we have to hardcode them
         PreparedStatement stLayersInsert = conn.prepareStatement(MessageFormat.format("INSERT INTO objects (pid, id, name, \"desc\", fid, the_geom, namesearch)"
-                + " SELECT nextval(''objects_id_seq''::regclass), {0}, MAX({1}), MAX({2}), ''{3}'', ST_UNION(the_geom), {4} FROM \"{5}\" GROUP BY {6}", fieldsSid, fieldsSname,
+                        + " SELECT nextval(''objects_id_seq''::regclass), {0}, MAX({1}), MAX({2}), ''{3}'', ST_UNION(the_geom), {4} FROM \"{5}\" GROUP BY {6}", fieldsSid, fieldsSname,
                 fieldsSdesc == null ? "NULL" : fieldsSdesc, fieldId, Boolean.toString(namesearch), Integer.toString(layerId), fieldsSid));
         return stLayersInsert;
     }

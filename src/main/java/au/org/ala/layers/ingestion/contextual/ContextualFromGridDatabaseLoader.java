@@ -1,15 +1,14 @@
 package au.org.ala.layers.ingestion.contextual;
 
+import au.org.ala.layers.ingestion.IngestionUtils;
+import org.apache.commons.io.FileUtils;
+
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.text.MessageFormat;
 import java.util.Properties;
-
-import org.apache.commons.io.FileUtils;
-
-import au.org.ala.layers.ingestion.IngestionUtils;
 
 public class ContextualFromGridDatabaseLoader {
 

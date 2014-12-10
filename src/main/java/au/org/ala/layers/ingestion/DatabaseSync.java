@@ -1,5 +1,7 @@
 package au.org.ala.layers.ingestion;
 
+import org.apache.commons.io.IOUtils;
+
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -8,8 +10,6 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-
-import org.apache.commons.io.IOUtils;
 
 /*
  * Used to sync the production database with the development database. Overwrites the database
@@ -32,7 +32,7 @@ public class DatabaseSync {
         String dbName = args[3];
         String dumpFilePath = args[4];
         String backupDumpFilePath = args[5];
-        
+
         if (args.length != 6) {
             System.out.println("Usage: DatabaseSync dbUsername dbPassword dbJdbcUrl dbName dumpFilePath backupDumpFilePath");
             // Abnormal termination
@@ -50,7 +50,7 @@ public class DatabaseSync {
 
             // backup the old database
             System.out.println("Backing up the database");
-            Process pg_dump = Runtime.getRuntime().exec(new String[] { "pg_dump", "-Fc", "-U", "postgres", "-f", backupDumpFile.getAbsolutePath(), dbName });
+            Process pg_dump = Runtime.getRuntime().exec(new String[]{"pg_dump", "-Fc", "-U", "postgres", "-f", backupDumpFile.getAbsolutePath(), dbName});
             int pgDumpReturnVal = pg_dump.waitFor();
 
             if (pgDumpReturnVal != 0) {
@@ -91,7 +91,7 @@ public class DatabaseSync {
 
             // drop the database
             System.out.println("Drop the database");
-            Process dropDB = Runtime.getRuntime().exec(new String[] { "dropdb", "-U", "postgres", dbName });
+            Process dropDB = Runtime.getRuntime().exec(new String[]{"dropdb", "-U", "postgres", dbName});
             int dropDBReturnVal = dropDB.waitFor();
 
             if (dropDBReturnVal != 0) {
@@ -101,7 +101,7 @@ public class DatabaseSync {
 
             // create a new version of the database
             System.out.println("Creating new blank database");
-            Process createDB = Runtime.getRuntime().exec(new String[] { "createdb", "-U", "postgres", dbName });
+            Process createDB = Runtime.getRuntime().exec(new String[]{"createdb", "-U", "postgres", dbName});
             int createDBReturnVal = createDB.waitFor();
 
             if (createDBReturnVal != 0) {
@@ -111,7 +111,7 @@ public class DatabaseSync {
 
             // restore from the new database dump file
             System.out.println("Loading new version of database using pg_restore");
-            Process pg_restore = Runtime.getRuntime().exec(new String[] { "pg_restore", "-d", dbName,  "-U", "postgres", dumpFile.getAbsolutePath() });
+            Process pg_restore = Runtime.getRuntime().exec(new String[]{"pg_restore", "-d", dbName, "-U", "postgres", dumpFile.getAbsolutePath()});
             int pgRestoreReturnVal = pg_restore.waitFor();
 
             if (pgRestoreReturnVal != 0) {

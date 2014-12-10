@@ -1,18 +1,13 @@
 package au.org.ala.layers.ingestion;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.sql.Types;
+import java.sql.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * Utility functions to assist with layer ingestion.
- * 
+ *
  * @author ChrisF
- * 
  */
 public class IngestionUtils {
 
@@ -27,7 +22,7 @@ public class IngestionUtils {
     public static final String GEOSERVER_QUERY_TEMPLATE = "<COMMON_GEOSERVER_URL>/gwc/service/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:{0}&format=image/png&styles=";
 
     public static PreparedStatement createLayersInsertForEnvironmental(Connection conn, int layerId, String description, String path, String name, String displayPath, double minLatitude, double minLongitude,
-            double maxLatitude, double maxLongitude, double valueMin, double valueMax, String units) throws SQLException {
+                                                                       double maxLatitude, double maxLongitude, double valueMin, double valueMax, String units) throws SQLException {
         PreparedStatement stLayersInsert = conn
                 .prepareStatement("INSERT INTO layers (id, name, description, type, path, displayPath, minlatitude, minlongitude, maxlatitude, maxlongitude, enabled, displayname, environmentalvaluemin, environmentalvaluemax, environmentalvalueunits, uid, path_orig) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
         stLayersInsert.setInt(1, layerId);
@@ -49,9 +44,9 @@ public class IngestionUtils {
         stLayersInsert.setString(17, "diva/" + name);
         return stLayersInsert;
     }
-    
+
     public static PreparedStatement createLayersInsertForContextual(Connection conn, int layerId, String description, String path, String name, String displayPath, double minLatitude,
-            double minLongitude, double maxLatitude, double maxLongitude, String path_orig) throws SQLException {
+                                                                    double minLongitude, double maxLatitude, double maxLongitude, String path_orig) throws SQLException {
         PreparedStatement stLayersInsert = conn
                 .prepareStatement("INSERT INTO layers (id, name, description, type, path, displayPath, minlatitude, minlongitude, maxlatitude, maxlongitude, enabled, displayname, uid, path_orig) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
         stLayersInsert.setInt(1, layerId);
@@ -72,7 +67,7 @@ public class IngestionUtils {
     }
 
     public static PreparedStatement createFieldsInsert(Connection conn, int layerId, String name, String description, String fieldId, String fieldType, String sid, String sname, String sdesc,
-            boolean indb, boolean enabled, boolean namesearch, boolean defaultlayer, boolean intersect, boolean layerbranch, boolean analysis, boolean addToMap) throws SQLException {
+                                                       boolean indb, boolean enabled, boolean namesearch, boolean defaultlayer, boolean intersect, boolean layerbranch, boolean analysis, boolean addToMap) throws SQLException {
         // TOOD slightly different statement if sdesc is null...
 
         PreparedStatement stFieldsInsert = conn
@@ -101,19 +96,17 @@ public class IngestionUtils {
         stFieldsInsert.setBoolean(15, layerbranch);
         stFieldsInsert.setBoolean(16, analysis);
         stFieldsInsert.setBoolean(17, addToMap);
-        
+
         return stFieldsInsert;
     }
-    
+
     /**
      * Match a pattern with a single capturing group and return the content of
      * the capturing group
-     * 
-     * @param text
-     *            the text to match against
-     * @param pattern
-     *            the pattern (regular expression) must contain one and only one
-     *            capturing group
+     *
+     * @param text    the text to match against
+     * @param pattern the pattern (regular expression) must contain one and only one
+     *                capturing group
      * @return
      */
     public static String matchPattern(String text, String pattern) {

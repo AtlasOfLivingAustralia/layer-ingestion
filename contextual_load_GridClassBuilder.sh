@@ -25,15 +25,15 @@ export JAVA_CLASSPATH=./layer-ingestion-1.0-SNAPSHOT.jar:./lib/*
 echo "create process directory" \
 && mkdir -p "${PROCESS_DIR}/${LAYER_SHORT_NAME}" \
 && echo "convert adf to bil, reprojecting to WGS 84" \
-&& gdalwarp -of EHdr -ot Float32 -t_srs EPSG:4326 "${ADF_HEADER_FILE}" "${PROCESS_DIR}/${LAYER_SHORT_NAME}/${LAYER_SHORT_NAME}.bil" \
+&& gdalwarp -r cubicspline -of EHdr -ot Float32 -t_srs EPSG:4326 "${ADF_HEADER_FILE}" "${PROCESS_DIR}/${LAYER_SHORT_NAME}/${LAYER_SHORT_NAME}.bil" \
 && echo "convert bil to diva" \
-&& java -Xmx10G -cp "${JAVA_CLASSPATH}" org.ala.layers.util.Bil2diva "${PROCESS_DIR}/${LAYER_SHORT_NAME}/${LAYER_SHORT_NAME}" "${SHAPE_DIVA_DIR}/${LAYER_SHORT_NAME}" "${UNITS}" \
+&& java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.util.Bil2diva "${PROCESS_DIR}/${LAYER_SHORT_NAME}/${LAYER_SHORT_NAME}" "${SHAPE_DIVA_DIR}/${LAYER_SHORT_NAME}" "${UNITS}" \
 && echo "Copy classes mapping file to shape_diva directory" \
 && cp ${CLASSES_MAPPING_FILE} ${SHAPE_DIVA_DIR}/${LAYER_SHORT_NAME}.txt \
 && echo "Run GridClassBuilder tool" \
-&& java -Xmx10G -cp "${JAVA_CLASSPATH}" org.ala.layers.grid.GridClassBuilder "${SHAPE_DIVA_DIR}/${LAYER_SHORT_NAME}" \
+&& java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.grid.GridClassBuilder "${SHAPE_DIVA_DIR}/${LAYER_SHORT_NAME}" \
 && echo "Convert diva for polygons into bil" \
-&& java -Xmx10G -cp "${JAVA_CLASSPATH}" org.ala.layers.util.Diva2bil "${SHAPE_DIVA_DIR}/${LAYER_SHORT_NAME}/polygons" "${PROCESS_DIR}/${LAYER_SHORT_NAME}/${LAYER_SHORT_NAME}" \
+&& java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.util.Diva2bil "${SHAPE_DIVA_DIR}/${LAYER_SHORT_NAME}/polygons" "${PROCESS_DIR}/${LAYER_SHORT_NAME}/${LAYER_SHORT_NAME}" \
 && echo "Convert polygons bil into geotiff" \
 && gdal_translate -of GTiff "${PROCESS_DIR}/${LAYER_SHORT_NAME}/${LAYER_SHORT_NAME}.bil" "${GEOTIFF_DIR}/${LAYER_SHORT_NAME}.tif" \
 && echo "Creating layer and fields table entries for layer" \

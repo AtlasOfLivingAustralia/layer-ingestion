@@ -20,8 +20,8 @@ echo "Regenerate layer thumbnails" \
 && echo "deleting contents of diva_cache directory" \
 && rm ${DIVA_CACHE_DIR}/* \
 && echo "running GridCacheBuilder" \
-&& java -Xmx20G -cp "${JAVA_CLASSPATH}" org.ala.layers.grid.GridCacheBuilder "${DIVA_DIR}" "${DIVA_CACHE_DIR}" \
+&& java -Xmx20G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.grid.GridCacheBuilder "${DIVA_DIR}" "${DIVA_CACHE_DIR}" \
 && echo "Preparing environmental layers for analysis" \
-&& java -Xmx20G -DANALYSIS_RESOLUTIONS=0.5,0.01,0.0025 -cp "${JAVA_CLASSPATH}" org.ala.layers.util.AnalysisLayerUtil auto grids \
+&& java -Xmx20G -DANALYSIS_RESOLUTIONS=0.5,0.01,0.0025 -cp "${JAVA_CLASSPATH}" au.org.ala.layers.util.AnalysisLayerUtil auto grids \
 && echo "Calculating environmental layer distance values" \
-&& java -Xmx20G -cp "${JAVA_CLASSPATH}" org.ala.spatial.analysis.index.LayerDistanceIndex 4
+&& java -Xmx20G -cp "${JAVA_CLASSPATH}" au.org.ala.spatial.analysis.index.LayerDistanceIndex 4

@@ -1,10 +1,6 @@
 package au.org.ala.layers.ingestion;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
+import java.sql.*;
 import java.util.Properties;
 
 /**
@@ -12,12 +8,11 @@ import java.util.Properties;
  * NOTE: This tool assumes that the layer ready files (shape or geotiff etc),
  * layer analysis files and gwc_tiles have been already copied from dev to the
  * appropriate places on prod.
- * 
+ *
  * @author ChrisF
- * 
  */
 public class MigrateLayerDatabaseEntries {
-    
+
     public static final String LAYER_TYPE_COLUMN_NAME = "type";
     public static final String ENVIRONMENTAL_LAYER_TYPE = "Environmental";
     public static final String CONTEXTUAL_LAYER_TYPE = "Contextual";
@@ -49,12 +44,12 @@ public class MigrateLayerDatabaseEntries {
 
         /**
          * FOR ENVIRONMENTAL LAYER
-         * 
+         *
          * copy layers table entry copy fields table entry create entries in
          * prod geoserver
-         * 
+         *
          * FOR CONTEXTUAL LAYER
-         * 
+         *
          * copy layers table entry copy fields table entry create shape file
          * table using shp2pgsql generate objects, object names etc (contextual
          * only) create entries in prod geoserver
@@ -89,7 +84,7 @@ public class MigrateLayerDatabaseEntries {
             if (!rowReturned) {
                 throw new RuntimeException("No layers table entry for layer id " + layerId);
             }
-            
+
             PreparedStatement layersInsertStmt = createLayersInsertStatement(prodConn, devLayersResult);
             layersInsertStmt.execute();
 
@@ -98,16 +93,16 @@ public class MigrateLayerDatabaseEntries {
             // such as the dynamic land cover layer.
             PreparedStatement fieldsSelectStmt = devConn.prepareStatement("Select * from fields where spid = ?;");
             fieldsSelectStmt.setString(1, Integer.toString(layerId));
-            
+
             ResultSet devFieldsResult = fieldsSelectStmt.executeQuery();
-            
+
             int numFieldsRows = 0;
-            while(devFieldsResult.next()) {
+            while (devFieldsResult.next()) {
                 PreparedStatement fieldsInsertStatement = createFieldsInsertStatement(prodConn, devFieldsResult);
                 fieldsInsertStatement.execute();
                 numFieldsRows++;
-            }          
-            
+            }
+
             prodConn.commit();
         } catch (Exception ex) {
             prodConn.rollback();
@@ -120,7 +115,7 @@ public class MigrateLayerDatabaseEntries {
         insertPreparedStatementArgumentsFromResultSetCurrentRow(layersInsertStatement, devLayersResult);
         return layersInsertStatement;
     }
-    
+
     private static PreparedStatement createFieldsInsertStatement(Connection prodConn, ResultSet devFieldsResult) throws Exception {
         PreparedStatement fieldsInsertStatement = prodConn.prepareStatement("INSERT INTO fields VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
         insertPreparedStatementArgumentsFromResultSetCurrentRow(fieldsInsertStatement, devFieldsResult);
