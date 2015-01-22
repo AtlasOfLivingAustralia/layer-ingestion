@@ -244,7 +244,7 @@ public class ContextualFromShapefileDatabaseLoader {
         // use shp2pgsql to convert shape file into sql for insertion in the
         // database
         System.out.println("Converting shape file for insertion in database...");
-        Process procShp2Pgsql = Runtime.getRuntime().exec(new String[]{"shp2pgsql", "-I", "-s", "4326", shapeFile.getAbsolutePath(), Integer.toString(layerId)});
+        Process procShp2Pgsql = Runtime.getRuntime().exec(new String[]{"shp2pgsql", "-g", "the_geom", "-I", "-s", "4326", shapeFile.getAbsolutePath(), Integer.toString(layerId)});
 
         String shp2pgsqlOutput = IOUtils.toString(procShp2Pgsql.getInputStream());
 
