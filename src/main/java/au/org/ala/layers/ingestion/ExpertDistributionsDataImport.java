@@ -22,25 +22,30 @@ import java.util.Properties;
 public class ExpertDistributionsDataImport {
 
     public static void main(String[] args) throws Exception {
+        System.out.println("USAGE: postgresql_url username password csvfile (optional -rematch or -load)");
+        System.out.println("e.g. jdbc:postgresql://localhost:5432/layersdb postgres postgres importFile.csv -load");
+
+
         Class.forName("org.postgresql.Driver");
-        String url = "jdbc:postgresql://ala-devmaps-db.vm.csiro.au:5432/layersdb";
+        String url = args[0]; //"jdbc:postgresql://localhost:5432/layersdb";
         Properties props = new Properties();
-        props.setProperty("user", "postgres");
-        props.setProperty("password", "postgres");
+        props.setProperty("user", args[1]);
+        props.setProperty("password", args[2]);
         Connection conn = DriverManager.getConnection(url, props);
         conn.setAutoCommit(false);
 
         ((org.postgresql.PGConnection) conn).addDataType("geometry", org.postgis.PGgeometry.class);
         ((org.postgresql.PGConnection) conn).addDataType("box3d", org.postgis.PGbox3d.class);
 
-        if (args.length == 1) {
-            load(args[0], conn);
-        } else if (args.length > 1) {
-            String file = args[0];
+
+        if (args.length == 4) {
+            load(args[3], conn);
+        } else if (args.length > 4) {
+            String file = args[3];
             //rematch and write to the file
-            if (args[1].equals("-rematch")) {
+            if (args[4].equals("-rematch")) {
                 rematch(file, conn);
-            } else if (args[1].equals("-load")) {
+            } else if (args[4].equals("-load")) {
                 load(file, conn);
             }
         }
@@ -196,7 +201,16 @@ public class ExpertDistributionsDataImport {
                 } else {
                     // insert new row
                     PreparedStatement stInsert = conn.prepareStatement(String
-                            .format("INSERT INTO distributiondata VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"));
+                            .format("INSERT INTO distributiondata " +
+                                    "(gid, spcode, scientific, authority_, common_nam, family, genus_name, specific_n," +
+                                    "min_depth, max_depth, pelagic_fl, metadata_u,the_geom,wmsurl,lsid,geom_idx,type, " +
+                                    "checklist_name," +
+                                    "notes,estuarine_fl,coastal_fl,desmersal_fl," +
+                                    "group_name,genus_exemplar,family_exemplar," +
+                                    "caab_species_number,caab_species_url,caab_family_number, caab_family_url,metadata_uuid," +
+                                    "family_lsid,genus_lsid" +
+                                    ")" +
+                                    "VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"));
                     stInsert.setInt(1, Integer.parseInt(spCode));
                     stInsert.setString(2, scientificName);
                     stInsert.setString(3, authorityFull);
@@ -219,9 +233,9 @@ public class ExpertDistributionsDataImport {
                     stInsert.setString(17, null);
                     stInsert.setString(18, null);
 
-                    setAsNullOrInteger(estuarineFlag, 19, stInsert);
-                    setAsNullOrInteger(coastalFlag, 20, stInsert);
-                    setAsNullOrInteger(desmersalFlag, 21, stInsert);
+                    setAsNullOrBoolean(estuarineFlag, 19, stInsert);
+                    setAsNullOrBoolean(coastalFlag, 20, stInsert);
+                    setAsNullOrBoolean(desmersalFlag, 21, stInsert);
 
                     stInsert.setString(22, groupName);
                     stInsert.setBoolean(23, genusExemplar.equals("1"));
@@ -262,30 +276,46 @@ public class ExpertDistributionsDataImport {
         }
     }
 
-    private static String lookupSpeciesOrFamilyLsid(String id) throws Exception {
-        HttpClient client = new DefaultHttpClient();
+    private static void setAsNullOrBoolean(String inputString, int index, PreparedStatement stmt) throws SQLException {
+        if (inputString.isEmpty()) {
+            stmt.setNull(index, Types.BOOLEAN);
+        } else {
+            stmt.setBoolean(index, Boolean.parseBoolean(inputString));
+        }
+    }
 
-        URL wsUrl = new URL("http://bie.ala.org.au/ws/guid/" + id);
-        URI uri = new URI(wsUrl.getProtocol(), wsUrl.getAuthority(), wsUrl.getPath(), wsUrl.getQuery(), wsUrl.getRef());
+    private static String lookupSpeciesOrFamilyLsid(String id) {
 
-        HttpGet get = new HttpGet(uri.toURL().toString());
-        HttpResponse response = client.execute(get);
-        if (response.getStatusLine().getStatusCode() != 200) {
-            throw new IllegalStateException("Fetching of species or family LSID failed " + response.getStatusLine().getReasonPhrase() + " " + id);
+        try {
+            HttpClient client = new DefaultHttpClient();
+
+            URL wsUrl = new URL("http://bie.ala.org.au/ws/guid/" + id);
+            URI uri = new URI(wsUrl.getProtocol(), wsUrl.getAuthority(), wsUrl.getPath(), wsUrl.getQuery(), wsUrl.getRef());
+
+            HttpGet get = new HttpGet(uri.toURL().toString());
+            HttpResponse response = client.execute(get);
+            if (response.getStatusLine().getStatusCode() != 200) {
+                System.out.println("Fetching of species or family LSID failed " + response.getStatusLine().getReasonPhrase() + " " + id);
+                return "";
+            }
+
+            HttpEntity entity = response.getEntity();
+            String responseContent = IOUtils.toString(entity.getContent());
+
+            JSONArray jsonArr = (JSONArray) new JSONParser().parse(responseContent);
+            String lsid = null;
+            if (jsonArr.size() > 0) {
+                JSONObject jsonObj = (JSONObject) jsonArr.get(0);
+
+                lsid = (String) jsonObj.get("acceptedIdentifier");
+            }
+
+            return lsid;
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-        HttpEntity entity = response.getEntity();
-        String responseContent = IOUtils.toString(entity.getContent());
-
-        JSONArray jsonArr = (JSONArray) new JSONParser().parse(responseContent);
-        String lsid = null;
-        if (jsonArr.size() > 0) {
-            JSONObject jsonObj = (JSONObject) jsonArr.get(0);
-
-            lsid = (String) jsonObj.get("acceptedIdentifier");
-        }
-
-        return lsid;
+        return "";
     }
 
     // Need to use a different web service to lookup genus lsids
