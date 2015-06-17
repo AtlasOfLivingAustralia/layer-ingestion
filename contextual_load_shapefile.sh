@@ -21,6 +21,8 @@ export GEOSERVERBASEURL="http://localhost:8082/geoserver"
 export GEOSERVERUSERNAME="admin"
 export GEOSERVERPASSWORD="password"
 
+export BASEURL="http://spatial-dev.ala.org.au/"
+
 export REPROJECTEDSHAPEFILE="/data/ala/data/layers/ready/shape/${LAYER_SHORT_NAME}.shp"
 
 export JAVA_CLASSPATH="./layer-ingestion-1.0-SNAPSHOT.jar:./lib/*"
@@ -32,4 +34,6 @@ echo "Reprojecting shapefile to WGS 84" \
 && echo "Create objects from layer" \
 && java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.ingestion.contextual.ContextualObjectCreator "${LAYERID}" "${DBUSERNAME}" "${DBPASSWORD}" "${DBJDBCURL}" \
 && echo "Load layer into geoserver" \
-&& java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.ingestion.PostgisTableGeoserverLoader "${GEOSERVERBASEURL}" "${GEOSERVERUSERNAME}" "${GEOSERVERPASSWORD}" "${LAYERID}" "${LAYER_SHORT_NAME}" "${LAYER_DISPLAY_NAME}"
+&& java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.ingestion.PostgisTableGeoserverLoader "${GEOSERVERBASEURL}" "${GEOSERVERUSERNAME}" "${GEOSERVERPASSWORD}" "${LAYERID}" "${LAYER_SHORT_NAME}" "${LAYER_DISPLAY_NAME}" \
+&& echo "Create coloured legend (sld) for geoserver" \
+&& java -Xmx10G -cp "${JAVA_CLASSPATH}" au.org.ala.layers.ingestion.contextual.ContextualLegend "${BASEURL}" "cl${LAYERID}" "/data/ala/data/layers/test/" "${GEOSERVERUSERNAME}" "${GEOSERVERPASSWORD}"
