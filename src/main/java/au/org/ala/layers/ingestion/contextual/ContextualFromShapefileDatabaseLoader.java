@@ -3,11 +3,12 @@ package au.org.ala.layers.ingestion.contextual;
 import au.org.ala.layers.ingestion.IngestionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
-import java.io.File;
+import java.io.*;
 import java.sql.*;
 import java.text.MessageFormat;
 import java.util.*;
@@ -92,7 +93,11 @@ public class ContextualFromShapefileDatabaseLoader {
             double minLongitude = extents[2];
             double maxLongitude = extents[3];
 
-            importShapeFile(layerId, shapeFile, conn);
+            if(System.getProperty("skipImportShapeFile") != null){
+                System.out.println("Skipping the import of shapefile....");
+            } else {
+                importShapeFile(layerId, shapeFile, conn);
+            }
 
             if (derivedColumnsFile != null) {
                 // Create an additional column for each derived column defined
@@ -246,16 +251,19 @@ public class ContextualFromShapefileDatabaseLoader {
         System.out.println("Converting shape file for insertion in database...");
         Process procShp2Pgsql = Runtime.getRuntime().exec(new String[]{"shp2pgsql", "-g", "the_geom", "-I", "-s", "4326", shapeFile.getAbsolutePath(), Integer.toString(layerId)});
 
-        String shp2pgsqlOutput = IOUtils.toString(procShp2Pgsql.getInputStream());
 
-        // shp2pgsql wraps the sql in BEGIN..COMMIT. Remove these, as we
-        // want all our database operations to be part of the one
-        // transaction
-        shp2pgsqlOutput = shp2pgsqlOutput.replace("BEGIN;", "");
-        shp2pgsqlOutput = shp2pgsqlOutput.replace("COMMIT;", "");
+        InputStream in = procShp2Pgsql.getInputStream();
+        String filePath = "/data/" + Integer.toString(layerId) + ".sql";
 
-        // process should have already terminated at this point - just do
-        // this to get the return code
+        if(new File(filePath).exists()){
+            FileUtils.forceDelete(new File(filePath));
+        }
+
+        OutputStream out = new FileOutputStream(filePath);
+        IOUtils.copy(in, out);
+        in.close();
+        out.close();
+
         int shp2pgsqlReturnVal = procShp2Pgsql.waitFor();
 
         if (shp2pgsqlReturnVal != 0) {
@@ -264,7 +272,31 @@ public class ContextualFromShapefileDatabaseLoader {
         }
 
         System.out.println("Writing shape file to database...");
-        conn.prepareStatement(shp2pgsqlOutput).execute();
+
+        //replace the content in the file
+        BufferedReader br = new BufferedReader(new FileReader(filePath));
+        String line;
+        String statement = "";
+        int lineNumber = 0;
+        int statementNumber = 0;
+        while((line = br.readLine()) != null){
+            System.out.println("Reading line " + lineNumber + ", statement " + statementNumber);
+            lineNumber ++;
+            line = line.replace("BEGIN;", "");
+            line = line.replace("COMMIT;", "");
+            line = line.trim();
+            statement += line;
+
+            if(line.endsWith(";")) {
+
+                if (StringUtils.isNotEmpty(statement)) {
+                    conn.prepareStatement(statement).execute();
+                    statement = "";
+                    statementNumber++;
+                }
+            }
+        }
+        br.close();
     }
 
     /**
