@@ -25,40 +25,41 @@ import java.util.*;
  */
 public class ContextualLegend {
 
-    /**
-     * HTTP request type PUT
-     */
-    public static final int PUT = 0;
-    /**
-     * HTTP request type POST
-     */
-    public static final int POST = 1;
-
     // max objects that can be created in the sld
     static int MAX_OBJECTS = 500;
 
-    static String baseUrl = "http://spatial-dev.ala.org.au";
+//    static String baseUrl = "http://spatial-dev.ala.org.au";
+
+    static String layersBaseUrl;
+
+    static String geoserverBaseUrl;
 
     public static void main(String[] args) {
 
-        baseUrl = args[0];
-        List validFields = Arrays.asList(args[1].split(","));
-        String outputPath = args[2];
-        String geoserverUrl = baseUrl + "/geoserver";
-        String geoserverUsername = args[3];
-        String geoserverPassword = args[4];
+        if(args.length != 6){
+            System.out.println("Usage: layersBaseUrl geoserverBaseUrl validFields outputPath geoserverUsername geoserverPassword");
+            System.exit(1);
+        }
+
+        layersBaseUrl = args[0];
+        geoserverBaseUrl = args[1];
+        List validFields = Arrays.asList(args[2].split(","));
+        String outputPath = args[3];
+        String geoserverUrl = geoserverBaseUrl;
+        String geoserverUsername = args[4];
+        String geoserverPassword = args[5];
 
         try {
             JSONParser jp = new JSONParser();
 
             //fetch all layers
-            String url = baseUrl + "/ws/layers";
+            String url = layersBaseUrl + "/layers";
             InputStream stream = new URI(url).toURL().openStream();
             JSONArray layers = (JSONArray) jp.parse(IOUtils.toString(stream, "UTF-8"));
             stream.close();
 
             //fetch all fields
-            url = baseUrl + "/ws/fields";
+            url = layersBaseUrl + "/fields";
             stream = new URI(url).toURL().openStream();
             JSONArray fields = (JSONArray) jp.parse(IOUtils.toString(stream, "UTF-8"));
             stream.close();
@@ -112,7 +113,7 @@ public class ContextualLegend {
                                 String THUMBNAIL_HEIGHT = "200";
 
                                 //get thumbnail
-                                String thumb = baseUrl + "/geoserver/wms/reflect?" +
+                                String thumb = geoserverUrl + "/wms/reflect?" +
                                         "layers=ALA:" + layer.get("name") +
                                         "&width=" + THUMBNAIL_WIDTH + "&height=" + THUMBNAIL_HEIGHT;
 
@@ -190,7 +191,7 @@ public class ContextualLegend {
         Set values = new HashSet();
 
         JSONArray objects = null;
-        String url = baseUrl + "/ws/field/" + fieldId;
+        String url = layersBaseUrl + "/field/" + fieldId;
         try {
             JSONParser jp = new JSONParser();
             InputStream stream = new URI(url).toURL().openStream();
@@ -423,69 +424,6 @@ public class ContextualLegend {
         } finally {
             // Release current connection to the connection pool once you are done
             put.releaseConnection();
-        }
-
-        return output;
-    }
-
-    /**
-     * sends a PUT or POST call to a URL using authentication and including a
-     * file upload
-     *
-     * @param type         one of UploadSpatialResource.PUT for a PUT call or
-     *                     UploadSpatialResource.POST for a POST call
-     * @param url          URL for PUT/POST call
-     * @param username     account username for authentication
-     * @param password     account password for authentication
-     * @param resourcepath local path to file to upload, null for no file to
-     *                     upload
-     * @param contenttype  file MIME content type
-     * @return server response status code as String or empty String if
-     * unsuccessful
-     */
-    public static String httpCall(int type, String url, String username, String password, String resourcepath, String contenttype) {
-        String output = "";
-
-        HttpClient client = new HttpClient();
-        client.getState().setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(username, password));
-
-
-        RequestEntity entity = null;
-        if (resourcepath != null) {
-            File input = new File(resourcepath);
-            entity = new FileRequestEntity(input, contenttype);
-        }
-
-        HttpMethod call = null;
-        ;
-        if (type == PUT) {
-            PutMethod put = new PutMethod(url);
-            put.setDoAuthentication(true);
-            if (entity != null) {
-                put.setRequestEntity(entity);
-            }
-            call = put;
-        } else if (type == POST) {
-            PostMethod post = new PostMethod(url);
-            if (entity != null) {
-                post.setRequestEntity(entity);
-            }
-            call = post;
-        } else {
-            //SpatialLogger.log("UploadSpatialResource", "invalid type: " + type);
-            return output;
-        }
-
-        // Execute the request 
-        try {
-            int result = client.executeMethod(call);
-
-            output += result;
-        } catch (Exception e) {
-            //SpatialLogger.log("UploadSpatialResource", "failed upload to: " + url);
-        } finally {
-            // Release current connection to the connection pool once you are done 
-            call.releaseConnection();
         }
 
         return output;
