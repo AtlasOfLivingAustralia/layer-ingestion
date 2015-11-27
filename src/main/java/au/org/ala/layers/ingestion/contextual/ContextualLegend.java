@@ -97,14 +97,14 @@ public class ContextualLegend {
                                 //Create style
                                 String extra = "";
                                 loadCreateStyle(geoserverUrl + "/rest/styles/",
-                                        extra, geoserverUsername, geoserverPassword, field.get("id") + "_default_style");
+                                        extra, geoserverUsername, geoserverPassword, field.get("id") + "_style");
 
                                 //Upload sld
-                                loadSld(geoserverUrl + "/rest/styles/" + field.get("id") + "_default_style",
+                                loadSld(geoserverUrl + "/rest/styles/" + field.get("id") + "_style",
                                         extra, geoserverUsername, geoserverPassword, sldFile.getPath());
 
                                 //Apply style
-                                String data = "<layer><enabled>true</enabled><defaultStyle><name>" + field.get("id") + "_default_style" +
+                                String data = "<layer><enabled>true</enabled><defaultStyle><name>" + field.get("id") + "_style" +
                                         "</name></defaultStyle></layer>";
                                 assignSld(geoserverUrl + "/rest/layers/ALA:" + layer.get("name"), extra,
                                         geoserverUsername, geoserverPassword, data);
