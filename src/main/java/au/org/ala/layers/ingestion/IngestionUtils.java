@@ -17,7 +17,6 @@ public class IngestionUtils {
     public static final String ENVIRONMENTAL_FIELD_PREFIX = "el";
     public static final String CONTEXTUAL_REGULAR_FIELD_TYPE = "c";
     public static final String CONTEXTUAL_FROM_GRID_CLASSES_FIELD_TYPE = "a";
-    public static final String CONTEXTUAL_FROM_GRID_INDIVIDUAL_OBJECTS_FIELD_TYPE = "b";
     public static final String ENVIRONMENTAL_FIELD_TYPE = "e";
     public static final String GEOSERVER_QUERY_TEMPLATE = "<COMMON_GEOSERVER_URL>/gwc/service/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:{0}&format=image/png&styles=";
 
@@ -66,10 +65,35 @@ public class IngestionUtils {
         return stLayersInsert;
     }
 
-    public static PreparedStatement createFieldsInsert(Connection conn, int layerId, String name, String description, String fieldId, String fieldType, String sid, String sname, String sdesc,
-                                                       boolean indb, boolean enabled, boolean namesearch, boolean defaultlayer, boolean intersect, boolean layerbranch, boolean analysis, boolean addToMap) throws SQLException {
-        // TOOD slightly different statement if sdesc is null...
+    public static PreparedStatement createObjectNameGenerationStatement(Connection conn) throws SQLException {
+        PreparedStatement objectNameGenerationStatement = conn.prepareStatement(
+                "INSERT INTO obj_names (name)" +
+                " SELECT lower(objects.name) FROM fields " +
+                " INNER JOIN objects ON objects.fid=fields.id" +
+                " LEFT OUTER JOIN obj_names ON lower(objects.name) = obj_names.name" +
+                " WHERE obj_names.name IS NULL" +
+                " AND fields.namesearch = true" +
+                " AND fields.id = objects.fid" +
+                " GROUP BY lower(objects.name);" +
+                " UPDATE objects SET name_id = obj_names.id FROM obj_names " +
+                " WHERE name_id IS NULL AND lower(objects.name) = obj_names.name;"
+        );
 
+        return objectNameGenerationStatement;
+    }
+
+    public static PreparedStatement createGenerateObjectsBBoxAndAreaStatement(Connection conn) throws SQLException {
+        PreparedStatement generateBBoxAndAreaStatement = conn.prepareStatement(
+                "update objects set bbox = ST_AsText(Box2D(the_geom)) where bbox is null; "
+                + "update objects set area_km=0 where st_geometrytype(the_geom) = 'ST_Point';");
+        return generateBBoxAndAreaStatement;
+    }
+
+    public static PreparedStatement createFieldsInsert(Connection conn, int layerId, String name, String description,
+                                                       String fieldId, String fieldType, String sid, String sname, String sdesc,
+                                                       boolean indb, boolean enabled, boolean namesearch,
+                                                       boolean defaultlayer, boolean intersect, boolean layerbranch,
+                                                       boolean analysis, boolean addToMap) throws SQLException {
         PreparedStatement stFieldsInsert = conn
                 .prepareStatement("INSERT INTO fields (name, id, \"desc\", type, spid, sid, sname, sdesc, indb, enabled, last_update, namesearch, defaultlayer, \"intersect\", layerbranch, analysis, addtomap)"
                         + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
